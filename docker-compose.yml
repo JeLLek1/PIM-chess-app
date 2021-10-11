@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+  app:
+    container_name: app
+    restart: always
+    build: ./server
+    env_file: .env
+    environment:
+      - PORT=${BE_PORT}
+    ports:
+      - 4000:${BE_PORT}
