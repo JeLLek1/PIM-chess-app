@@ -33,15 +33,18 @@ export function addUserToRoom(room: Room, user: User): boolean {
   return true;
 }
 
-export function removeUserFromRoom(room: Room, user: User): void {
-  if (room.user1.id === user.userId) {
+export function removeUserFromRoom(room: Room, user: User): boolean {
+  if (room.user1?.id === user.userId) {
     room.user1 = null;
-  } else if (room.user2.id === user.userId) {
+  } else if (room.user2?.id === user.userId) {
     room.user2 = null;
+  } else {
+    return false;
   }
   if (room.user1 === null && room.user2 === null) {
     RoomRepository.deleteRoom(room.roomId);
   }
+  return true;
 }
 
 export function findRoom(roomId: string): Room | null {

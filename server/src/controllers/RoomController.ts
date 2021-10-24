@@ -44,8 +44,17 @@ export function joinRoom(
   if (room === null) {
     throw new ValidationError("Room doesn't exist.");
   }
+  const remainingUser = room.user1?.id || room.user2?.id;
   if (!RoomService.addUserToRoom(room, user)) {
     throw new ValidationError('Room is full.');
+  }
+  if (remainingUser !== null) {
+    const remainingWs = getConnectionById(remainingUser);
+    if (remainingWs) {
+      remainingWs.send(
+        createOutgoingMessage(OutgoingEventType.PARTICIPANT_JOINED_ROOM, room),
+      );
+    }
   }
   ws.send(createOutgoingMessage(OutgoingEventType.JOINED_ROOM, room));
   broadcastMessage(OutgoingEventType.LIST_ROOMS, RoomService.getRoomsList());
@@ -64,7 +73,9 @@ export function leaveRoom(
   if (room === null) {
     throw new ValidationError("Room doesn't exist.");
   }
-  RoomService.removeUserFromRoom(room, user);
+  if (!RoomService.removeUserFromRoom(room, user)) {
+    throw new ValidationError("You don't belong to this room.");
+  }
   const remainingUser = room.user1?.id || room.user2?.id;
   if (remainingUser !== null) {
     const remainingWs = getConnectionById(remainingUser);
