@@ -81,7 +81,10 @@ export function leaveRoom(
     const remainingWs = getConnectionById(remainingUser);
     if (remainingWs) {
       remainingWs.send(
-        createOutgoingMessage(OutgoingEventType.PARTICIPANT_LEFT_ROOM, room),
+        createOutgoingMessage(
+          OutgoingEventType.PARTICIPANT_ABANDONED_ROOM,
+          room,
+        ),
       );
     }
   }
@@ -99,7 +102,10 @@ export function leaveAllRooms(user: User) {
       const remainingWs = getConnectionById(remainingUser);
       if (remainingWs) {
         remainingWs.send(
-          createOutgoingMessage(OutgoingEventType.PARTICIPANT_LEFT_ROOM, room),
+          createOutgoingMessage(
+            OutgoingEventType.PARTICIPANT_ABANDONED_ROOM,
+            room,
+          ),
         );
       }
     }
