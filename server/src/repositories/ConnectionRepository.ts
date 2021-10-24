@@ -1,10 +1,10 @@
-import WebSocket from "ws";
+import WebSocket from 'ws';
 
 const connections = new Map<string, WebSocket>();
 
-export function saveConnection(userId: string, connection: WebSocket){
+export function saveConnection(userId: string, connection: WebSocket) {
   const existingConnection = connections.get(userId);
-  if(!existingConnection) {
+  if (!existingConnection) {
     connections.set(userId, connection);
   }
 }
@@ -18,8 +18,13 @@ export function deleteConnection(userId: string): void {
   connections.delete(userId);
 }
 
-export default {
-  saveConnection: saveConnection,
-  getConnectionById:getConnectionById,
-  deleteConnection: deleteConnection,
+export function getAllConnections(): WebSocket[] {
+  return Array.from(connections, ([_, ws]) => ws);
 }
+
+export default {
+  saveConnection,
+  getConnectionById,
+  deleteConnection,
+  getAllConnections,
+};

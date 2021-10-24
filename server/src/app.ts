@@ -3,14 +3,9 @@ import dotenv from 'dotenv';
 import server from './server';
 import wss from './endpoints/WebSocketServer';
 
-
 dotenv.config();
 const port = parseInt(process.env.PORT);
 const app = express();
-
-app.get('/', (req, res) => {
-  res.send('Test');
-});
 
 server.on('request', app);
 

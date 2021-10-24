@@ -1,73 +1,71 @@
-import { Room, getRoomById, saveRoom, deleteRoom } from "../repositories/RoomRepository";
-import { getUserById } from "../repositories/UserRepository";
-import { generateRandomString } from "../utils/stringUtils";
+import RoomRepository, { Room } from '../repositories/RoomRepository';
+import { User } from '../repositories/UserRepository';
+import { v4 as uuidv4 } from 'uuid';
 
 export function createRoom(roomName: string): Room | null {
-  for (let i = 0; i < 10; i++) {
-    const newId = generateRandomString(32);
-    const newRoom = { 
-      roomId: newId,
-      roomName: roomName,
-      userId1: null,
-      userId2: null
-    };
-    const roomFromRep = saveRoom(newRoom);
-    if (roomFromRep) {
-      return newRoom;
-    }
+  const newId = uuidv4();
+  const newRoom = {
+    roomId: newId,
+    roomName: roomName,
+    user1: null,
+    user2: null,
+  };
+  const roomFromRep = RoomRepository.saveRoom(newRoom);
+  if (!roomFromRep) {
+    return null;
   }
-  return null;
+  return roomFromRep;
 }
 
+export function addUserToRoom(room: Room, user: User): boolean {
+  const roomUser = {
+    id: user.userId,
+    name: user.userName,
+  };
 
-export function addUserToRoom(roomId: string, userId: string): void {
-  const room = getRoomById(roomId);
-  if (room === null) {
-    throw new Error("Room doesn't exist.");
-  }
-
-  const user = getUserById(userId);
-  if (user === null) {
-    throw new Error("User doesn't exist.");
-  }
-
-  if (room.userId1 !== null && room.userId2 !== null) {
-    throw new Error("Room is full.");
-  }
-
-  if (room.userId1 !== null) {
-    room.userId2 = userId
+  if (room.user1 === null) {
+    room.user1 = roomUser;
+  } else if (room.user2 === null) {
+    room.user2 = roomUser;
   } else {
-    room.userId1 = userId
+    return false;
   }
+  return true;
 }
 
-export function removeUserFromRoom(roomId: string, userId: string): void {
-  const room = getRoomById(roomId);
-  if (room === null) {
-    throw new Error("Room doesn't exist.");
+export function removeUserFromRoom(room: Room, user: User): void {
+  if (room.user1.id === user.userId) {
+    room.user1 = null;
+  } else if (room.user2.id === user.userId) {
+    room.user2 = null;
   }
-
-  if (room.userId1 === userId) {
-    room.userId1 = null;
-  }
-  if (room.userId2 === userId) {
-    room.userId2 = null;
+  if (room.user1 === null && room.user2 === null) {
+    RoomRepository.deleteRoom(room.roomId);
   }
 }
 
 export function findRoom(roomId: string): Room | null {
-  return getRoomById(roomId);
+  return RoomRepository.getRoomById(roomId);
 }
 
 export function removeRoom(roomId: string): void {
-  deleteRoom(roomId);
+  RoomRepository.deleteRoom(roomId);
+}
+
+export function getRoomsList(): Room[] {
+  return RoomRepository.getAllRooms();
+}
+
+export function getRoomsByUser(user: User): Room[] {
+  return RoomRepository.getRoomsByUserId(user.userId);
 }
 
 export default {
-  createRoom: createRoom,
-  addUserToRoom: addUserToRoom,
-  removeUserFromRoom: removeUserFromRoom,
-  findRoom: findRoom,
-  removeRoom: removeRoom,
-}
+  createRoom,
+  addUserToRoom,
+  removeUserFromRoom,
+  findRoom,
+  removeRoom,
+  getRoomsList,
+  getRoomsByUser,
+};

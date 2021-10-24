@@ -1,15 +1,26 @@
 import WebSocket from 'ws';
 import parse from 'url-parse';
-import UserService from '../services/UserService';
-import ConnectionRepository, { saveConnection } from '../repositories/ConnectionRepository';
-import { createOutgoingMessage, IncomingEventType, IncomingMessage, OutgoingEventType, OutgoingMessage } from './Messages';
-import RoomService from '../services/RoomService';
-import { CreateRoomPayload } from './PayloadsTypes';
+import { UserService, RoomService } from '../services';
+import ConnectionRepository, {
+  saveConnection,
+} from '../repositories/ConnectionRepository';
+import {
+  createOutgoingMessage,
+  IncomingEventType,
+  IncomingMessage,
+  OutgoingEventType,
+} from './Messages';
+import {
+  CreateRoomPayload,
+  JoinRoomPayload,
+  LeaveRoomPayload,
+} from './PayloadsTypes';
+import { ValidationError } from '../utils';
+import { RoomController } from '../controllers';
 
 const wss = new WebSocket.Server({
   noServer: true,
 });
-
 
 wss.on('connection', (ws, request) => {
   const url = parse(request.url);
@@ -18,43 +29,69 @@ wss.on('connection', (ws, request) => {
   const user = UserService.createUser(userName);
 
   if (user === null) {
-    ws.send('created'); //TODO error handling
+    sendError(ws, 'Internal error');
     ws.close();
   }
   saveConnection(user.userId, ws);
   ws.send(createOutgoingMessage(OutgoingEventType.USER_CREATED, user));
-  
+  ws.send(
+    createOutgoingMessage(
+      OutgoingEventType.LIST_ROOMS,
+      RoomService.getRoomsList(),
+    ),
+  );
+
   ws.on('close', () => {
-    console.log('disconnected'); // TODO send message on close
+    RoomController.leaveAllRooms(user);
     ConnectionRepository.deleteConnection(user.userId);
     UserService.removeUser(user.userId);
   });
 
-  ws.on('message', (data) => {
-    let message: IncomingMessage | null = null;
+  ws.on('message', data => {
+    let message: IncomingMessage<null> | null = null;
 
     try {
-      message = JSON.parse(data.toString()) as IncomingMessage;
+      message = JSON.parse(data.toString()) as IncomingMessage<null>;
     } catch (e) {
       sendError(ws, 'Wrong format');
       return;
     }
-
-    switch(message.type) {
-      case IncomingEventType.CREATE_ROOM: {
-        const payload = message.data as CreateRoomPayload;
-        if (payload && typeof payload.roomName === 'string') {
-          const room = RoomService.createRoom(payload.roomName);
-          ws.send(createOutgoingMessage(OutgoingEventType.ROOM_CREATED, room));
-        } else {
-          sendError(ws, 'Wrong format');
-          return;
+    try {
+      switch (message.type) {
+        case IncomingEventType.CREATE_ROOM: {
+          RoomController.createRoom(
+            ws,
+            user,
+            (message as IncomingMessage<CreateRoomPayload>).data,
+          );
+          break;
         }
-        break;
+        case IncomingEventType.JOIN_ROOM: {
+          RoomController.joinRoom(
+            ws,
+            user,
+            (message as IncomingMessage<JoinRoomPayload>).data,
+          );
+          break;
+        }
+        case IncomingEventType.LEAVE_ROOM: {
+          RoomController.leaveRoom(
+            ws,
+            user,
+            (message as IncomingMessage<LeaveRoomPayload>).data,
+          );
+          break;
+        }
+        default: {
+          throw new ValidationError('Invalid event type');
+        }
       }
-      default: {
-        sendError(ws, 'Invalid event type');
-        return;
+    } catch (e) {
+      if (e instanceof ValidationError) {
+        sendError(ws, (e as Error).message);
+      } else {
+        console.log(e);
+        sendError(ws, 'Internal error');
       }
     }
   });

@@ -1,16 +1,19 @@
-import { User, getUserById, saveUser, deleteUser } from "../repositories/UserRepository";
-import { generateRandomString } from "../utils/stringUtils";
+import {
+  User,
+  getUserById,
+  saveUser,
+  deleteUser,
+} from '../repositories/UserRepository';
+import { v4 as uuidv4 } from 'uuid';
 
 export function createUser(userName: string): User | null {
-  for (let i = 0; i < 10; i++) {
-    const newId = generateRandomString(32);
-    const newUser = { userId: newId, userName: userName };
-    const userFromRep = saveUser(newUser);
-    if (userFromRep) {
-      return newUser;
-    }
+  const newId = uuidv4();
+  const newUser = { userId: newId, userName: userName };
+  const userFromRep = saveUser(newUser);
+  if (!userFromRep) {
+    return null;
   }
-  return null;
+  return newUser;
 }
 
 export function findUser(userId: string): User | null {
@@ -22,7 +25,7 @@ export function removeUser(userId: string): void {
 }
 
 export default {
-  createUser: createUser,
-  findUser: findUser,
-  removeUser: removeUser,
-}
+  createUser,
+  findUser,
+  removeUser,
+};

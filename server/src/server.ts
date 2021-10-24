@@ -1,5 +1,4 @@
 import Http from 'http';
 
-const server = Http.createServer()
-export const port = parseInt(process.env.PORT);
+const server = Http.createServer();
 export default server;
