@@ -17,14 +17,14 @@
 ```
 
 ## IncomingEventType ##
-```json
+```typescript
   "CREATE_ROOM" // tworzenie pokoju gry (CreateRoomPayload)
   "JOIN_ROOM" // dołączanie do pokoju (JoinRoomPayload)
   "LEAVE_ROOM" // opuszczenie pokoju (LeaveRoomPayload)
 ```
 ## OutgoingEventType ##
 
-```json
+```typescript
 "USER_CREATED" // poprawnie połączenie z serwerem
 "ROOM_CREATED"  //  stworzono pokój
 "JOINED_ROOM" // dołączono do pokoju
