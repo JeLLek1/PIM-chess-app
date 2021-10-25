@@ -23,7 +23,7 @@ export enum OutgoingEventType {
   PARTICIPANT_ABANDONED_ROOM = 'PARTICIPANT_ABANDONED_ROOM',
   LIST_ROOMS = 'LIST_ROOMS',
   ERROR = 'ERROR',
-  DISCONECTED = 'DISCONECTED',
+  DISCONNECTED = 'DISCONNECTED',
 }
 
 export function createOutgoingMessage<T>(
