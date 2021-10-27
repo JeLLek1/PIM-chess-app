@@ -1,7 +1,13 @@
-export type User = {
+export type UserPublic = {
   userId: string;
   userName: string;
 };
+
+export type UserPrivate = {
+
+}
+
+export type User = UserPublic & UserPrivate;
 
 const users = new Map<string, User>();
 

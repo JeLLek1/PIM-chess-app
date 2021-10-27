@@ -24,8 +24,13 @@ export function removeUser(userId: string): void {
   deleteUser(userId);
 }
 
+export function getIdsFromUsers(users: User[]): string[] {
+  return users.map((user: User) => user.userId);
+}
+
 export default {
   createUser,
   findUser,
   removeUser,
+  getIdsFromUsers,
 };

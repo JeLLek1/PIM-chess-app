@@ -14,6 +14,10 @@ export function getConnectionById(userId: string): WebSocket | null {
   return existingConnection ? existingConnection : null;
 }
 
+export function getConnections(userIds: string[]): WebSocket[] {
+  return userIds.map((userId) => getConnectionById(userId));
+}
+
 export function deleteConnection(userId: string): void {
   connections.delete(userId);
 }
@@ -27,4 +31,5 @@ export default {
   getConnectionById,
   deleteConnection,
   getAllConnections,
+  getConnections,
 };

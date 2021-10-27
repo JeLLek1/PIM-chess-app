@@ -9,3 +9,13 @@ export type JoinRoomPayload = {
 export type LeaveRoomPayload = {
   roomId: string;
 };
+
+export type StartGamePayload = {
+  roomId: string;
+};
+
+export type PieceMovePayload = {
+  roomId: string;
+  from: string;
+  to: string;
+}

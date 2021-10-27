@@ -7,6 +7,9 @@ export enum IncomingEventType {
   CREATE_ROOM = 'CREATE_ROOM',
   JOIN_ROOM = 'JOIN_ROOM',
   LEAVE_ROOM = 'LEAVE_ROOM',
+  PLAYER_READY = 'PLAYER_READY',
+  MAKE_MOVE = "MAKE_MOVE",
+  START = 'START', // for tests
 }
 
 export type OutgoingMessage<T> = {
@@ -24,6 +27,8 @@ export enum OutgoingEventType {
   LIST_ROOMS = 'LIST_ROOMS',
   ERROR = 'ERROR',
   DISCONNECTED = 'DISCONNECTED',
+  GAME_STARTED = 'GAME_STARTED',
+  BOARD_UPDATED = 'BOARD_UPDATED',
 }
 
 export function createOutgoingMessage<T>(

@@ -1,14 +1,12 @@
+import { BoardData } from "./additionalTypes/Board";
+import { User, UserPublic } from "./UserRepository";
+
 export type Room = {
   roomId: string;
   roomName: string;
-  user1: {
-    id: string;
-    name: string;
-  } | null;
-  user2: {
-    id: string;
-    name: string;
-  } | null;
+  user1: UserPublic | null;
+  user2: UserPublic | null;
+  boardData: BoardData | null;
 };
 
 const rooms = new Map<string, Room>();
@@ -21,7 +19,7 @@ export function getRoomById(roomId: string): Room | null {
 export function getRoomsByUserId(userId: string): Room[] {
   const roomsFound: Room[] = [];
   rooms.forEach(room => {
-    if (room.user1?.id === userId || room.user2?.id == userId) {
+    if (room.user1?.userId === userId || room.user2?.userId === userId) {
       roomsFound.push(room);
     }
   });
