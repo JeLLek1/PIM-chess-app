@@ -10,13 +10,10 @@ import {
   IncomingMessage,
   OutgoingEventType,
 } from './Messages';
-import {
-  CreateRoomPayload,
-  JoinRoomPayload,
-  LeaveRoomPayload,
-} from './PayloadsTypes';
+import { CreateRoomPayload } from './PayloadsTypes';
 import { ValidationError } from '../utils';
 import { RoomController } from '../controllers';
+import { endpoints } from './Endpoints';
 
 const wss = new WebSocket.Server({
   noServer: true,
@@ -48,43 +45,19 @@ wss.on('connection', (ws, request) => {
   });
 
   ws.on('message', data => {
-    let message: IncomingMessage<null> | null = null;
+    let message: IncomingMessage<any> | null = null;
 
     try {
-      message = JSON.parse(data.toString()) as IncomingMessage<null>;
+      message = JSON.parse(data.toString()) as IncomingMessage<any>;
     } catch (e) {
       sendError(ws, 'Wrong format');
       return;
     }
     try {
-      switch (message.type) {
-        case IncomingEventType.CREATE_ROOM: {
-          RoomController.createRoom(
-            ws,
-            user,
-            (message as IncomingMessage<CreateRoomPayload>).data,
-          );
-          break;
-        }
-        case IncomingEventType.JOIN_ROOM: {
-          RoomController.joinRoom(
-            ws,
-            user,
-            (message as IncomingMessage<JoinRoomPayload>).data,
-          );
-          break;
-        }
-        case IncomingEventType.LEAVE_ROOM: {
-          RoomController.leaveRoom(
-            ws,
-            user,
-            (message as IncomingMessage<LeaveRoomPayload>).data,
-          );
-          break;
-        }
-        default: {
-          throw new ValidationError('Invalid event type');
-        }
+      if (typeof endpoints[message.type] !== 'undefined') {
+        endpoints[message.type].method(ws, user, message.data);
+      } else {
+        throw new ValidationError('Invalid event type');
       }
     } catch (e) {
       if (e instanceof ValidationError) {

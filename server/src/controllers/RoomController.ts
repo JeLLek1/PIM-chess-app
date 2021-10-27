@@ -9,8 +9,6 @@ import { ValidationError, broadcastMessage } from '../utils';
 import { User } from '../repositories/UserRepository';
 import {
   createOutgoingMessage,
-  IncomingEventType,
-  IncomingMessage,
   OutgoingEventType,
 } from '../endpoints/Messages';
 import { getConnectionById } from '../repositories/ConnectionRepository';
