@@ -6,11 +6,9 @@ import ConnectionRepository, {
 } from '../repositories/ConnectionRepository';
 import {
   createOutgoingMessage,
-  IncomingEventType,
   IncomingMessage,
   OutgoingEventType,
 } from './Messages';
-import { CreateRoomPayload } from './PayloadsTypes';
 import { ValidationError } from '../utils';
 import { RoomController } from '../controllers';
 import { endpoints } from './Endpoints';
@@ -54,8 +52,8 @@ wss.on('connection', (ws, request) => {
       return;
     }
     try {
-      if (typeof endpoints[message.type] !== 'undefined') {
-        endpoints[message.type].method(ws, user, message.data);
+      if (endpoints.has(message.type)) {
+        endpoints.get(message.type)(ws, user, message.data);
       } else {
         throw new ValidationError('Invalid event type');
       }

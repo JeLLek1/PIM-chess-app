@@ -1,25 +1,13 @@
 import { User } from '../repositories/UserRepository';
 import { RoomController } from '../controllers';
+import { IncomingEventType } from './Messages';
 import WebSocket from 'ws';
 
-export type ControlerMethod = (ws: WebSocket, user: User, payload: any) => void;
-
-export interface IEndpoint {
-  method: ControlerMethod;
-}
-
-export interface IEndpoints {
-  [key: string]: IEndpoint;
-}
-
-export const endpoints: IEndpoints = {
-  CREATE_ROOM: {
-    method: RoomController.createRoom,
-  },
-  JOIN_ROOM: {
-    method: RoomController.joinRoom,
-  },
-  LEAVE_ROOM: {
-    method: RoomController.leaveRoom,
-  },
-};
+export const endpoints = new Map<
+  IncomingEventType,
+  (ws: WebSocket, user: User, payload: any) => void
+>([
+  [IncomingEventType.CREATE_ROOM, RoomController.createRoom],
+  [IncomingEventType.JOIN_ROOM, RoomController.joinRoom],
+  [IncomingEventType.LEAVE_ROOM, RoomController.leaveRoom],
+]);
