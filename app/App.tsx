@@ -4,23 +4,23 @@ import { Button, StyleSheet, Text, View } from "react-native";
 
 import RoomScreen from "./screens/room_screen";
 import BoardScreen from "./screens/board_screen";
+import { BoardProvider } from "./contexts/board_context";
 
-const BACKGROUND = "rgb(36,32,30)"
+const BACKGROUND = "#E8EAED"
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <RoomScreen></RoomScreen>
-    </View>
+    <BoardProvider>
+      <View style={styles.container}>
+        <BoardScreen></BoardScreen>
+      </View>
+    </BoardProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8EAED'
-    //alignItems: "center",
-    //justifyContent: "center",
-    //backgroundColor: BACKGROUND
+    backgroundColor: BACKGROUND
   },
 });
