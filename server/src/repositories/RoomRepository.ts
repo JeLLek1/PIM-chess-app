@@ -7,6 +7,7 @@ export type Room = {
   user1: UserPublic | null;
   user2: UserPublic | null;
   boardData: BoardData | null;
+  user1Color: "w" | "b";
 };
 
 const rooms = new Map<string, Room>();

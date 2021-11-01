@@ -1,16 +1,22 @@
 import RoomRepository, { Room } from '../repositories/RoomRepository';
 import { User, UserPublic } from '../repositories/UserRepository';
 import { v4 as uuidv4 } from 'uuid';
-import { Board, BoardElement, PieceType, positionToIndex } from '../repositories/additionalTypes/Board';
+import {
+  Color,
+  positionToIndex,
+  getOpositeColor,
+} from '../repositories/additionalTypes/Board';
+import Chess from '../Chess';
 
 export function createRoom(roomName: string): Room | null {
   const newId = uuidv4();
-  const newRoom = {
+  const newRoom: Room = {
     roomId: newId,
     roomName: roomName,
     user1: null,
     user2: null,
     boardData: null,
+    user1Color: Math.random() >= 0.5 ? 'b' : 'w',
   };
   const roomFromRep = RoomRepository.saveRoom(newRoom);
   if (!roomFromRep) {
@@ -40,8 +46,15 @@ export function removeUserFromRoom(room: Room, user: User): boolean {
   } else {
     return false;
   }
-  if (room.user1 === null && room.user2 === null) {
-    RoomRepository.deleteRoom(room.roomId);
+  if (room.user1 === null){
+    if(room.user2 === null){
+      RoomRepository.deleteRoom(room.roomId);
+    }else{
+      // change main player of the room
+      room.user1 = room.user2;
+      room.user2 = null;
+      room.user1Color = getOpositeColor(room.user1Color);
+    }
   }
   return true;
 }
@@ -63,42 +76,7 @@ export function getRoomsByUser(user: User): Room[] {
 }
 
 export function createBoard(room : Room): Room {
-  room.boardData = {
-    board: Array(8).fill(null).map(() => Array(8).fill(null)),
-  }
-
-  function generatePawns(color: "w" | "b"): BoardElement[] {
-    const arr = Array(8).fill(null);
-    return arr.map(() => {
-      return {
-        color: color,
-        type: "pawn",
-      }
-    });
-  }
-
-  room.boardData.board[1] = generatePawns("w");
-  room.boardData.board[6] = generatePawns("b");
-
-  function generateOuterRows(color: "w" | "b"): BoardElement[] {
-    const arr = Array(8).fill(null);
-    return arr.map((el, i) => {
-      let type: PieceType = "pawn";
-      if (i === 0 || i === 7) type = "rook";
-      else if (i === 1 || i === 6) type = "knight";
-      else if (i === 2 || i === 5) type = "bishop";
-      else if (i === 3) type = "queen";
-      else type = "king";
-  
-      return {
-        color: color,
-        type: type,
-      }
-    });
-  }
-
-  room.boardData.board[0] = generateOuterRows("w");
-  room.boardData.board[7] = generateOuterRows("b");
+  room.boardData = Chess.createDefaultPosition();
 
   return room;
 }
@@ -111,14 +89,36 @@ export function getUsersOfRoom(room : Room): User[] {
   return [];
 }
 
-export function movePiece(board : Board, from: string, to: string): void {
-  if (!board) return; 
+export function getUserColor(room: Room, user: User): Color|null {
+  if(room.user1.userId === user.userId){
+    return room.user1Color;
+  }else if(room.user2.userId === user.userId){
+    return getOpositeColor(room.user1Color);
+  }
+  return null;
+}
+
+export function movePiece(room: Room, user: User, from: string, to: string): boolean {
+  if (!room?.boardData?.board) return false;
+
+  const color = getUserColor(room, user);
+  if (room.boardData.turn !== color) {
+    return false;
+  }
+  
   const initPos = positionToIndex(from);
   const movePos = positionToIndex(to);
-  
-  const piece = board[initPos[0]][initPos[1]];
-  board[initPos[0]][initPos[1]] = null;
-  board[movePos[0]][movePos[1]] = piece;
+
+  if (!Chess.checkMove(room.boardData, initPos, movePos)){
+    return false;
+  }
+  const piece = room.boardData.board[initPos[0]][initPos[1]];
+  room.boardData.board[initPos[0]][initPos[1]] = null;
+  room.boardData.board[movePos[0]][movePos[1]] = piece;
+
+  room.boardData.turn = getOpositeColor(room.boardData.turn);
+
+  return true;
 }
 
 export default {

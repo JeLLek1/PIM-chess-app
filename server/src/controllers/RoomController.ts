@@ -7,16 +7,14 @@ import {
 } from '../endpoints/PayloadsTypes';
 import RoomService, { createBoard } from '../services/RoomService';
 import WebSocket from 'ws';
-import { ValidationError, broadcastMessage } from '../utils';
+import { ValidationError, broadcastMessage, sendToRoommates } from '../utils';
 import { User } from '../repositories/UserRepository';
 import {
   createOutgoingMessage,
   OutgoingEventType,
 } from '../endpoints/Messages';
 import ConnectionRepository, { getConnectionById } from '../repositories/ConnectionRepository';
-import RoomRepository, { Room } from '../repositories/RoomRepository';
 import { UserService } from '../services';
-import { positionToIndex } from '../repositories/additionalTypes/Board';
 
 export function createRoom(
   ws: WebSocket,
@@ -121,16 +119,33 @@ export function start(
   user: User,
   payload: StartGamePayload,
 ): void {
-  const room = RoomService.findRoom(payload.roomId);
-  if (room) {
-    createBoard(room);
-    getConnectionsOfRoom(room).forEach((ws, i) => {
-      ws.send(createOutgoingMessage(
-        OutgoingEventType.GAME_STARTED,
-        room.boardData.board,
-      ));
-    });
+  
+  if (!payload || typeof payload.roomId !== 'string') {
+    throw new ValidationError('Wrong format');
   }
+  const room = RoomService.findRoom(payload.roomId);
+  if (!room) {
+    throw new ValidationError("Room doesn't exist.");
+  }
+  if(room.user1 === null || room.user2 === null){
+    throw new ValidationError(
+      'Game can\'t start without two players',
+    );
+  }
+  if (room.user1.userId !== user.userId){
+    throw new ValidationError(
+      'Only the user who created the room can start the game',
+    );
+  }
+  if (room.boardData !== null){
+    throw new ValidationError('The game has already started');
+  }
+  createBoard(room);
+  sendToRoommates(
+    room,
+    OutgoingEventType.GAME_STARTED,
+    room,
+  );
 }
 
 export function playerReady(
@@ -146,22 +161,32 @@ export function makeMove(
   user: User,
   payload: PieceMovePayload,
 ): void {
-  const room = RoomService.findRoom(payload.roomId);
-  const board = room.boardData.board;
-  if (board) {
-    RoomService.movePiece(board, payload.from, payload.to);
-    getConnectionsOfRoom(room).forEach((ws, i) => {
-      ws.send(createOutgoingMessage(
-        OutgoingEventType.BOARD_UPDATED,
-        room.boardData.board,
-      ));
-    });
+  if (
+    !payload ||
+    typeof payload.roomId !== 'string' ||
+    typeof payload.from !== 'string' ||
+    typeof payload.to !== 'string'
+  ) {
+    throw new ValidationError('Wrong format');
   }
-}
-
-function getConnectionsOfRoom(room: Room): WebSocket[] {
-  console.log(RoomService.getUsersOfRoom(room))
-  return ConnectionRepository.getConnections(UserService.getIdsFromUsers(RoomService.getUsersOfRoom(room)))
+  const room = RoomService.findRoom(payload.roomId);
+  if (!room) {
+    throw new ValidationError("Room doesn't exist.");
+  }
+  if (room.user1 === null || room.user2 === null) {
+    throw new ValidationError("Game can't run without two players");
+  }
+  if (room.boardData === null) {
+    throw new ValidationError('The game has not started yet');
+  }
+  if (!RoomService.movePiece(room, user, payload.from, payload.to)) {
+    throw new ValidationError('Illegal move');
+  }
+  sendToRoommates(
+    room,
+    OutgoingEventType.BOARD_UPDATED,
+    room,
+  );
 }
 
 export default {
