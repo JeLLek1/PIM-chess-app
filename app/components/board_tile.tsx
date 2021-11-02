@@ -29,8 +29,10 @@ export default function BoardTile(props: BoardTileProps) {
 
 
     return (
-        <TouchableOpacity onPress={onTileClicked} style={[style.item,{backgroundColor: backgroundColor}]}>
-            {piece && <MaterialCommunityIcons name={piece?.type} color={piece.color} size={32}/>}
+        <TouchableOpacity onPress={onTileClicked} style={[style.item, {backgroundColor: backgroundColor}]}>
+            <View style={[style.item, boardContext.selectedPiece === piece && piece? style.itemSelected : null]}>
+                {piece && <MaterialCommunityIcons name={piece?.type} color={piece.color} size={32}/>}
+            </View>
         </TouchableOpacity>
     )
 }
@@ -40,5 +42,11 @@ const style = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center"
+    },
+
+    itemSelected: {
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(247,247,105,0.5)",
     }
 })
