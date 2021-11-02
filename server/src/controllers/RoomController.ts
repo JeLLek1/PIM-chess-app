@@ -148,14 +148,6 @@ export function start(
   );
 }
 
-export function playerReady(
-  ws: WebSocket,
-  user: User,
-  payload: any,
-): void {
-
-}
-
 export function makeMove(
   ws: WebSocket,
   user: User,
@@ -197,6 +189,5 @@ export default {
   leaveRoom,
   leaveAllRooms,
   start,
-  playerReady,
   makeMove,
 };
