@@ -11,6 +11,5 @@ export const endpoints = new Map<
   [IncomingEventType.JOIN_ROOM, RoomController.joinRoom],
   [IncomingEventType.LEAVE_ROOM, RoomController.leaveRoom],
   [IncomingEventType.START, RoomController.start],
-  [IncomingEventType.PLAYER_READY, RoomController.playerReady],
   [IncomingEventType.MAKE_MOVE, RoomController.makeMove],
 ]);

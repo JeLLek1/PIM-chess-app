@@ -7,7 +7,6 @@ export enum IncomingEventType {
   CREATE_ROOM = 'CREATE_ROOM',
   JOIN_ROOM = 'JOIN_ROOM',
   LEAVE_ROOM = 'LEAVE_ROOM',
-  PLAYER_READY = 'PLAYER_READY',
   MAKE_MOVE = "MAKE_MOVE",
   START = 'START', // for tests
 }
