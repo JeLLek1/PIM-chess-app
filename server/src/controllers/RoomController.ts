@@ -165,7 +165,8 @@ export function makeMove(
     !payload ||
     typeof payload.roomId !== 'string' ||
     typeof payload.from !== 'string' ||
-    typeof payload.to !== 'string'
+    typeof payload.to !== 'string' ||
+    !["string", "undefined"].includes(typeof payload.promotion)
   ) {
     throw new ValidationError('Wrong format');
   }
@@ -179,14 +180,15 @@ export function makeMove(
   if (room.boardData === null) {
     throw new ValidationError('The game has not started yet');
   }
-  if (!RoomService.movePiece(room, user, payload.from, payload.to)) {
+  if (!RoomService.movePiece(room, user, payload.from, payload.to, payload.promotion)) {
     throw new ValidationError('Illegal move');
   }
-  sendToRoommates(
+  sendToRoommates(room, OutgoingEventType.BOARD_UPDATED, {
     room,
-    OutgoingEventType.BOARD_UPDATED,
-    room,
-  );
+    from: payload.from,
+    to: payload.to,
+    promotion: payload.promotion,
+  });
 }
 
 export default {

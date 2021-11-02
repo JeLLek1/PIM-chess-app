@@ -3,8 +3,38 @@ import {
   BoardData,
   BoardElement,
   PieceType,
-  positionToIndex,
+  getOpositeColor,
+  getPiecesData,
 } from '../repositories/additionalTypes/Board';
+
+const posiblePromotions: PieceType[] = ['knight', 'bishop', 'rook', 'queen'];
+
+const pieceAttacks: number[][] = [
+  [20,  0,  0,  0,  0,  0,  0, 24,  0,  0,  0,  0,  0,  0, 20],
+  [ 0, 20,  0,  0,  0,  0,  0, 24,  0,  0,  0,  0,  0, 20,  0],
+  [ 0,  0, 20,  0,  0,  0,  0, 24,  0,  0,  0,  0, 20,  0,  0],
+  [ 0,  0,  0, 20,  0,  0,  0, 24,  0,  0,  0, 20,  0,  0,  0],
+  [ 0,  0,  0,  0, 20,  0,  0, 24,  0,  0, 20,  0,  0,  0,  0],
+  [ 0,  0,  0,  0,  0, 20,  2, 24,  2, 20,  0,  0,  0,  0,  0],
+  [ 0,  0,  0,  0,  0,  2, 53, 56, 53,  2,  0,  0,  0,  0,  0],
+  [24, 24, 24, 24, 24, 24, 56,  0, 56, 24, 24, 24, 24, 24, 24],
+  [ 0,  0,  0,  0,  0,  2, 52, 56, 52,  2,  0,  0,  0,  0,  0],
+  [ 0,  0,  0,  0,  0, 20,  2, 24,  2, 20,  0,  0,  0,  0,  0],
+  [ 0,  0,  0,  0, 20,  0,  0, 24,  0,  0, 20,  0,  0,  0,  0],
+  [ 0,  0,  0, 20,  0,  0,  0, 24,  0,  0,  0, 20,  0,  0,  0],
+  [ 0,  0, 20,  0,  0,  0,  0, 24,  0,  0,  0,  0, 20,  0,  0],
+  [ 0, 20,  0,  0,  0,  0,  0, 24,  0,  0,  0,  0,  0, 20,  0],
+  [20,  0,  0,  0,  0,  0,  0, 24,  0,  0,  0,  0,  0,  0, 20],
+];
+
+const pieceMask = new Map<PieceType, number>([
+  ["pawn", 1],
+  ["knight", 2],
+  ["bishop", 4],
+  ["rook", 8],
+  ["queen", 16],
+  ["king", 32],
+]);
 
 
 export function createDefaultPosition(): BoardData{
@@ -13,7 +43,8 @@ export function createDefaultPosition(): BoardData{
         .fill(null)
         .map(() => Array(8).fill(null)),
       result: '*',
-      turn: 'w',
+      turnColor: 'w',
+      turn: 1,
     };
     function generatePawns(color: 'w' | 'b'): BoardElement[] {
       const arr = Array(8).fill(null);
@@ -21,6 +52,7 @@ export function createDefaultPosition(): BoardData{
         return {
           color: color,
           type: 'pawn',
+          lastMove: -1,
         };
       });
     }
@@ -41,6 +73,7 @@ export function createDefaultPosition(): BoardData{
         return {
           color: color,
           type: type,
+          lastMove: -1,
         };
       });
     }
@@ -51,8 +84,26 @@ export function createDefaultPosition(): BoardData{
     return boardData;
 }
 
-export function checkMove(board: BoardData, from: [number, number], to: [number, number]): boolean{
-    const piece: BoardElement = board.board[from[0]][from[1]];
-    if(piece === null || piece.color !== board.turn) return false;
-    return true;
+export function makeMove(
+  boardData: BoardData,
+  from: [number, number],
+  to: [number, number],
+  promotion?: PieceType,
+): boolean {
+  const piece: BoardElement = boardData.board[from[0]][from[1]];
+  if (piece === null || piece.color !== boardData.turnColor) return false;
+  const piecesData = getPiecesData(boardData);
+
+  if (typeof promotion !== 'undefined') {
+    piece.type = promotion;
+  }
+  piece.lastMove = boardData.turn;
+  boardData.board[from[0]][from[1]] = null;
+  boardData.board[to[0]][to[1]] = piece;
+
+  boardData.turnColor = getOpositeColor(boardData.turnColor);
+  boardData.turn++;
+  return true;
 }
+
+function kingHasMove(boardData) {}

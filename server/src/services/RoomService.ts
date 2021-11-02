@@ -5,6 +5,7 @@ import {
   Color,
   positionToIndex,
   getOpositeColor,
+  PieceType,
 } from '../repositories/additionalTypes/Board';
 import Chess from '../Chess';
 
@@ -98,25 +99,26 @@ export function getUserColor(room: Room, user: User): Color|null {
   return null;
 }
 
-export function movePiece(room: Room, user: User, from: string, to: string): boolean {
+export function movePiece(
+  room: Room,
+  user: User,
+  from: string,
+  to: string,
+  promotion?: PieceType,
+): boolean {
   if (!room?.boardData?.board) return false;
 
   const color = getUserColor(room, user);
-  if (room.boardData.turn !== color) {
+  if (room.boardData.turnColor !== color) {
     return false;
   }
-  
+
   const initPos = positionToIndex(from);
   const movePos = positionToIndex(to);
 
-  if (!Chess.checkMove(room.boardData, initPos, movePos)){
+  if (!Chess.makeMove(room.boardData, initPos, movePos, promotion)) {
     return false;
   }
-  const piece = room.boardData.board[initPos[0]][initPos[1]];
-  room.boardData.board[initPos[0]][initPos[1]] = null;
-  room.boardData.board[movePos[0]][movePos[1]] = piece;
-
-  room.boardData.turn = getOpositeColor(room.boardData.turn);
 
   return true;
 }

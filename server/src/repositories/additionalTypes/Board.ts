@@ -17,13 +17,28 @@ export type Result = '1-0' | '0-1' | '1/2-1/2' | '*';
 export type BoardData = {
   board: Board;
   result: Result;
-  turn: Color;
+  turnColor: Color;
+  turn: number;
 };
 
 export type BoardElement = {
   color: Color;
   type: PieceType;
+  lastMove: number;
 }
+
+export type TPieceData = {
+  piece: BoardElement;
+  position: [number, number];
+};
+
+export type TPiecesData = {
+  white: TPieceData[];
+  black: TPieceData[];
+  whiteKing: TPieceData;
+  blackKing: TPieceData;
+};
+
 
 export function positionToIndex(pos: string): [number, number] {
   pos = pos.toLowerCase();
@@ -37,6 +52,38 @@ export function positionToIndex(pos: string): [number, number] {
   if (isNaN(numPos) || numPos < 0 || numPos > 8)
     throw new ValidationError('Invalid position forma (' + pos + ')');
   return [numPos, letterPos];
+}
+
+export function getPiecesData(boardData: BoardData): TPiecesData {
+  const out: TPiecesData = {
+    white: [],
+    black: [],
+    whiteKing: null,
+    blackKing: null,
+  };
+
+  boardData.board.forEach((row, y) => {
+    row.forEach((piece, x) => {
+      if (piece === null) return;
+      const pieceData: TPieceData = {
+        piece,
+        position: [y, x],
+      };
+      if (piece.color === 'w') {
+        out.white.push(pieceData);
+        if (piece.type === 'king') {
+          out.whiteKing = pieceData;
+        }
+      } else {
+        out.black.push(pieceData);
+        if (piece.type === 'king') {
+          out.blackKing = pieceData;
+        }
+      }
+    });
+  });
+
+  return out;
 }
 
 export function getOpositeColor(color: Color): Color {
