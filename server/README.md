@@ -21,6 +21,8 @@
   "CREATE_ROOM" // tworzenie pokoju gry (CreateRoomPayload)
   "JOIN_ROOM" // dołączanie do pokoju (JoinRoomPayload)
   "LEAVE_ROOM" // opuszczenie pokoju (LeaveRoomPayload)
+  "START" // rozpoczęcie rozgrywki (StartGamePayload)
+  "MAKE_MOVE" // rozpoczęcie rozgrywki (PieceMovePayload)
 ```
 ## OutgoingEventType ##
 
@@ -34,6 +36,8 @@
 "LIST_ROOMS" // lista dostępnych pokoi ( broadcast przy każdej zmianie w pokojach)
 "ERROR" // błąd podczas wykonywania operacji
 "DISCONNECTED" // rozłączenie z serwerem
+"GAME_STARTED" // rozpoczęcie gry - informacja o pozycji bierek na planszy, kolorze wykonywanego ruchu, kolorze graczy
+"BOARD_UPDATED" // aktualizacja pozycji - informacja o planszy i wykonanym ruchu - jeżeli wykonano ruch z promocją informacja o typie promocji
 ```
 
 ## Outgoing Payloads ##
@@ -48,5 +52,16 @@ type JoinRoomPayload = {
 
 type LeaveRoomPayload = {
   roomId: string;
+};
+
+type StartGamePayload = {
+  roomId: string;
+};
+
+type PieceMovePayload = {
+  roomId: string;
+  from: string; // przykładowy format "a1"
+  to: string; // przykładowy format "a1"
+  promotion?: PieceType; // promocja pionka - parametr opcjonlany 'knight' | 'bishop' | 'rook' | 'queen'
 };
 ```
