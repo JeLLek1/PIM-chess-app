@@ -36,7 +36,7 @@ const pieceMoves: number[][] = [
   [ 0,  0,  0, 20,  0,  0,  0, 24,  0,  0,  0, 20,  0,  0,  0],
   [ 0,  0,  0,  0, 20,  0,  0, 24,  0,  0, 20,  0,  0,  0,  0],
   [ 0,  0,  0,  0,  0, 20,  2, 25,  2, 20,  0,  0,  0,  0,  0],
-  [ 0,  0,  0,  0,  0,  2, 52, 57, 52,  2,  0,  0,  0,  0,  0],
+  [ 0,  0,  0,  0,  0,  2, 53, 57, 53,  2,  0,  0,  0,  0,  0],
   [24, 24, 24, 24, 24, 56, 56,  0, 56, 56, 24, 24, 24, 24, 24],
   [ 0,  0,  0,  0,  0,  2, 52, 56, 52,  2,  0,  0,  0,  0,  0],
   [ 0,  0,  0,  0,  0, 20,  2, 24,  2, 20,  0,  0,  0,  0,  0],
@@ -137,15 +137,14 @@ export function makeMove(
   )
     return false;
   // first check if piece of can make given move pattern
-  // TODO: check for En passant
   if (boardData.board[to[0]][to[1]] === null) {
     if (!checkPieceMovePatern(piece, patternPosition)) return false;
+    // TODO: check for En passant
   } else {
     if (!checkPieceAttackPatern(piece, patternPosition)) return false;
   }
-
   // check promotion data
-  if (!checkPromotion(piece, from, to, promotion)) return false;
+  if (!checkPromotion(piece, to, promotion)) return false;
 
   const piecesData = getPiecesData(boardData);
 
@@ -243,7 +242,6 @@ function getMovePatternPosition(
  */
 function checkPromotion(
   piece: BoardElement,
-  from: [number, number],
   to: [number, number],
   promotion?: PieceType,
 ): boolean {
@@ -261,4 +259,8 @@ function checkPromotion(
     if (typeof promotion !== 'undefined') return false;
     return true;
   }
+}
+
+function isEnPassant() {
+  return false;
 }

@@ -13,7 +13,9 @@ import {
   createOutgoingMessage,
   OutgoingEventType,
 } from '../endpoints/Messages';
-import ConnectionRepository, { getConnectionById } from '../repositories/ConnectionRepository';
+import ConnectionRepository, {
+  getConnectionById,
+} from '../repositories/ConnectionRepository';
 import { UserService } from '../services';
 
 export function createRoom(
@@ -119,7 +121,6 @@ export function start(
   user: User,
   payload: StartGamePayload,
 ): void {
-  
   if (!payload || typeof payload.roomId !== 'string') {
     throw new ValidationError('Wrong format');
   }
@@ -127,25 +128,19 @@ export function start(
   if (!room) {
     throw new ValidationError("Room doesn't exist.");
   }
-  if(room.user1 === null || room.user2 === null){
-    throw new ValidationError(
-      'Game can\'t start without two players',
-    );
+  if (room.user1 === null || room.user2 === null) {
+    throw new ValidationError("Game can't start without two players");
   }
-  if (room.user1.userId !== user.userId){
+  if (room.user1.userId !== user.userId) {
     throw new ValidationError(
       'Only the user who created the room can start the game',
     );
   }
-  if (room.boardData !== null){
+  if (room.boardData !== null) {
     throw new ValidationError('The game has already started');
   }
   createBoard(room);
-  sendToRoommates(
-    room,
-    OutgoingEventType.GAME_STARTED,
-    room,
-  );
+  sendToRoommates(room, OutgoingEventType.GAME_STARTED, room);
 }
 
 export function makeMove(
@@ -158,7 +153,7 @@ export function makeMove(
     typeof payload.roomId !== 'string' ||
     typeof payload.from !== 'string' ||
     typeof payload.to !== 'string' ||
-    !["string", "undefined"].includes(typeof payload.promotion)
+    !['string', 'undefined'].includes(typeof payload.promotion)
   ) {
     throw new ValidationError('Wrong format');
   }
@@ -172,7 +167,18 @@ export function makeMove(
   if (room.boardData === null) {
     throw new ValidationError('The game has not started yet');
   }
-  if (!RoomService.movePiece(room, user, payload.from, payload.to, payload.promotion)) {
+  if (room.boardData.result !== '*') {
+    throw new ValidationError('The game is over');
+  }
+  if (
+    !RoomService.movePiece(
+      room,
+      user,
+      payload.from,
+      payload.to,
+      payload.promotion,
+    )
+  ) {
     throw new ValidationError('Illegal move');
   }
   sendToRoommates(room, OutgoingEventType.BOARD_UPDATED, {
