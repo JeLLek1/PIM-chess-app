@@ -16,9 +16,12 @@ export type StartGamePayload = {
   roomId: string;
 };
 
-export type PieceMovePayload = {
+export type PieceMoveCheckPayload = {
   roomId: string;
   from: string;
+};
+
+export type PieceMovePayload = PieceMoveCheckPayload & {
   to: string;
   promotion?: PieceType;
 };

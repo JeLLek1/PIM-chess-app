@@ -7,6 +7,7 @@ import {
   getOpositeColor,
   getPiecesData,
 } from '../repositories/additionalTypes/Board';
+import { createBoard } from '../services/RoomService';
 
 const posiblePromotions: PieceType[] = ['knight', 'bishop', 'rook', 'queen'];
 
@@ -59,15 +60,23 @@ const pieceMask = new Map<PieceType, number>([
 ]);
 
 /**
+ * Creates board filled with null
+ * @return {Board}
+ */
+function createEmptyBoard(): Board {
+  return Array(8)
+  .fill(null)
+  .map(() => Array(8).fill(null));
+}
+
+/**
  * prepare default board position
  *
  * @returns BoardData
  */
 export function createDefaultPosition(): BoardData {
   const boardData: BoardData = {
-    board: Array(8)
-      .fill(null)
-      .map(() => Array(8).fill(null)),
+    board: createEmptyBoard(),
     result: '*',
     turnColor: 'w',
     turn: 1,
@@ -263,4 +272,172 @@ function checkPromotion(
 
 function isEnPassant() {
   return false;
+}
+
+/**
+ * calcualates possible moves for given position and board
+ *
+ * @param from [number, number]
+ * @returns {Board}
+ */
+export function getPossibleMoves(
+  boardData: BoardData,
+  from: [number, number]
+): boolean[][] {
+  const board = boardData.board
+  const piece = board[from[0]][from[1]];
+  let moveBoard = Array(8)
+  .fill(false)
+  .map(() => Array(8).fill(false));
+  // console.log(boardData.board)
+
+  const x = from[0], y = from[1];
+
+  function movesDiag(): boolean[][] {
+    const moveBoard = Array(8)
+    .fill(false)
+    .map(() => Array(8).fill(false));
+    let stopTR = false, stopTL = false, stopBR = false, stopBL = false;
+
+    for(let i = 1; i < 8; i++) {
+      if (!stopTL) {
+        if (x - i >= 0 && y + i < 8 && board[x - i][y + i] === null) {
+          moveBoard[x - i][y + i] = true;
+        } else {
+          if (x - i >= 0 && y + i < 8 && board[x - i][y + i].color !== piece.color) {
+            moveBoard[x - i][y + i] = true;
+          }
+          stopTL = true
+        }
+      }
+      if (!stopTR) {
+        if (x + i < 8 && y + i < 8 && board[x + i][y + i] === null) {
+          moveBoard[x + i][y + i] = true;
+        } else {
+          if (x + i < 8 && y + i < 8 && board[x + i][y + i].color !== piece.color) {
+            moveBoard[x + i][y + i] = true;
+          }
+          stopTR = true
+        }
+      }
+      if (!stopBL) {
+        if (x - i >= 0 && y - i >= 0 && board[x - i][y - i] === null) {
+          moveBoard[x - i][y - i] = true;
+        } else {
+          if (x - i >= 0 && y - i >= 0 && board[x - i][y - i].color !== piece.color) {
+            moveBoard[x - i][y - i] = true;
+          }
+          stopBL = true
+        }
+      }
+      if (!stopBR) {
+        if (x + i < 8 && y - i >= 0 && board[x + i][y - i] === null) {
+          moveBoard[x + i][y - i] = true;
+        } else {
+          if (x + i < 8 && y - i >= 0 && board[x + i][y - i].color !== piece.color) {
+            moveBoard[x + i][y - i] = true;
+          }
+          stopBR = true
+        }
+      }
+    }
+    return moveBoard;
+  }
+
+  function movesStraight(): boolean[][] {
+    const moveBoard = Array(8)
+    .fill(false)
+    .map(() => Array(8).fill(false));
+    let stopT = false, stopL = false, stopR = false, stopB = false;
+
+    for(let i = 1; i < 8; i++) {
+      if (!stopT) {
+        if (y + i < 8 && board[x][y + i] === null) {
+          moveBoard[x][y + i] = true;
+        } else {
+          if (y + i < 8 && board[x][y + i].color !== piece.color) {
+            moveBoard[x][y + i] = true;
+          }
+          stopT = true
+        }
+      }
+      if (!stopR) {
+        if (x + i < 8 && board[x + i][y] === null) {
+          moveBoard[x + i][y] = true;
+        } else {
+          if (x + i < 8 && board[x + i][y].color !== piece.color) {
+            moveBoard[x + i][y] = true;
+          }
+          stopR = true
+        }
+      }
+      if (!stopB) {
+        if (y - i >= 0 && board[x][y - i] === null) {
+          moveBoard[x][y - i] = true;
+        } else {
+          if (y - i >= 0 && board[x][y - i].color !== piece.color) {
+            moveBoard[x][y - 1] = true;
+          }
+          stopB = true
+        }
+      }
+      if (!stopL) {
+        if (x - i >= 0 && board[x - i][y] === null) {
+          moveBoard[x - i][y] = true;
+        } else {
+          if (x - i >= 0 && board[x - i][y].color !== piece.color) {
+            moveBoard[x - i][y] = true;
+          }
+          stopL = true
+        }
+      }
+    }
+    return moveBoard;
+  }
+
+  if (piece === null) return moveBoard;
+  switch(piece.type) {
+    case "pawn": {
+      break;
+    }
+    case "knight": {
+      for(let i = -2; i <= 2; i++) {
+        for(let j = -2; j <= 2; j++) {
+          if (x + i >= 0 && x + i <= 7 && y + j >= 0 && y + j <= 7 ) {
+            moveBoard[x + i][y + j] = 
+              !!(pieceMoves[checkCenter[0] + i][checkCenter[1] + j] & 
+              pieceMask.get('knight') && 
+              (
+                !board[x + i][y + j] ||
+                board[x + i][y + j].color !== piece.color
+              ));
+          }
+        }
+      }
+      break;
+    }
+    case "bishop": {
+      moveBoard = movesDiag();
+      break;
+    }
+    case "rook": {
+      moveBoard = movesStraight();
+      break;
+    }
+    case "queen": {
+
+      const tmp1 = movesDiag();
+      const tmp2 = movesStraight();
+      moveBoard = tmp1.map((e, i) => {
+        return e.map((c, j) => {
+          return c || tmp2[i][j];
+        })
+      });
+      break;
+    }
+    case "king": {
+      break;
+    }
+  }
+  return moveBoard;
 }
