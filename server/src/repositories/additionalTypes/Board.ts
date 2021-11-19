@@ -93,3 +93,4 @@ export function getOpositeColor(color: Color): Color {
 export function indexToPosition(index: [number, number]): string {
   return index[0] + 1 + String.fromCharCode('A'.charCodeAt(0) + index[1]);
 }
+
