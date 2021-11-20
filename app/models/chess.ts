@@ -1,15 +1,15 @@
 export enum PieceType {
-    PAWN = "chess-pawn",
-    ROOK = "chess-rook",
-    KNIGHT = "chess-knight",
-    BISHOP = "chess-bishop",
-    QUEEN = "chess-queen",
-    KING = "chess-king",
+    PAWN = "pawn",
+    ROOK = "rook",
+    KNIGHT = "knight",
+    BISHOP = "bishop",
+    QUEEN = "queen",
+    KING = "king",
 }
 
 export enum PieceColor {
-    WHITE = "white",
-    BLACK = "black"
+    WHITE = "w",
+    BLACK = "b"
 }
 
 export interface PiecePosition {
@@ -23,275 +23,43 @@ export interface ChessPiece {
     position: PiecePosition
 }
 
-export type Board = (ChessPiece|undefined)[][];
 
-export const DEFAULT_BOARD: Board = [
-    [
-        {
-            type: PieceType.ROOK,
-            color: PieceColor.BLACK,
-            position: {
-                row: 0,
-                col: 0
-            }
-        },
-        {
-            type: PieceType.KNIGHT,
-            color: PieceColor.BLACK,
-            position: {
-                row: 0,
-                col: 1
-            }
-        },
-        {
-            type: PieceType.BISHOP,
-            color: PieceColor.BLACK,
-            position: {
-                row: 0,
-                col: 2
-            }
-        },
-        {
-            type: PieceType.QUEEN,
-            color: PieceColor.BLACK,
-            position: {
-                row: 0,
-                col: 3
-            }
-        },
-        {
-            type: PieceType.KING,
-            color: PieceColor.BLACK,
-            position: {
-                row: 0,
-                col: 4
-            }
-        },
-        {
-            type: PieceType.BISHOP,
-            color: PieceColor.BLACK,
-            position: {
-                row: 0,
-                col: 5
-            }
-        },
-        {
-            type: PieceType.KNIGHT,
-            color: PieceColor.BLACK,
-            position: {
-                row: 0,
-                col: 6
-            }
-        },
-        {
-            type: PieceType.ROOK,
-            color: PieceColor.BLACK,
-            position: {
-                row: 0,
-                col: 7
+//konwersja PiecePosition na adres pola
+export const convertPosToAddress = (row: number, col: number) => {
+    const asciiCode = col + 97;
+    const ascii = String.fromCharCode(asciiCode);
+    console.log(`${ascii}${row+1}`)
+    return `${ascii}${row+1}`;
+}
+
+//konwersja kodu koloru na enum
+export const convertColorStringToColor = (colorS: string) => {
+    if (colorS === "w" || colorS === "W") return PieceColor.WHITE;
+    if (colorS === "b" || colorS === "B") return PieceColor.BLACK;
+    return undefined;
+}
+
+//konwersja z board otrzymanego po socket'cie na board wykorzystywany w UI
+export const convertBoardData = (boardData: any) => {
+    const newBoard = new Array(8);
+    for(let i = 0; i < 8; i++) {
+        newBoard[i] = new Array(8);
+        for (let j = 0; j < 8; j++) {
+            if (boardData[i][j]) {
+                newBoard[i][j] = {
+                    color: boardData[i][j].color,
+                    type: boardData[i][j].type,
+                    position: {
+                        row: i,
+                        col: j
+                    }
+                }
+            } else {
+                newBoard[i][j] = undefined;
             }
         }
-    ],
-    [
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.BLACK,
-            position: {
-                row: 1,
-                col: 0
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.BLACK,
-            position: {
-                row: 1,
-                col: 1
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.BLACK,
-            position: {
-                row: 1,
-                col: 2
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.BLACK,
-            position: {
-                row: 1,
-                col: 3
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.BLACK,
-            position: {
-                row: 1,
-                col: 4
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.BLACK,
-            position: {
-                row: 1,
-                col: 5
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.BLACK,
-            position: {
-                row: 1,
-                col: 6
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.BLACK,
-            position: {
-                row: 1,
-                col: 7
-            }
-        }
-    ],
-    Array(8).fill(undefined),
-    Array(8).fill(undefined),
-    Array(8).fill(undefined),
-    Array(8).fill(undefined),
-    [
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.WHITE,
-            position: {
-                row: 6,
-                col: 0
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.WHITE,
-            position: {
-                row: 6,
-                col: 1
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.WHITE,
-            position: {
-                row: 6,
-                col: 2
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.WHITE,
-            position: {
-                row: 6,
-                col: 3
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.WHITE,
-            position: {
-                row: 6,
-                col: 4
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.WHITE,
-            position: {
-                row: 6,
-                col: 5
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.WHITE,
-            position: {
-                row: 6,
-                col: 6
-            }
-        },
-        {
-            type: PieceType.PAWN,
-            color: PieceColor.WHITE,
-            position: {
-                row: 6,
-                col: 7
-            }
-        }
-    ],
-    [
-        {
-            type: PieceType.ROOK,
-            color: PieceColor.WHITE,
-            position: {
-                row: 7,
-                col: 0
-            }
-        },
-        {
-            type: PieceType.KNIGHT,
-            color: PieceColor.WHITE,
-            position: {
-                row: 7,
-                col: 1
-            }
-        },
-        {
-            type: PieceType.BISHOP,
-            color: PieceColor.WHITE,
-            position: {
-                row: 7,
-                col: 2
-            }
-        },
-        {
-            type: PieceType.QUEEN,
-            color: PieceColor.WHITE,
-            position: {
-                row: 7,
-                col: 3
-            }
-        },
-        {
-            type: PieceType.KING,
-            color: PieceColor.WHITE,
-            position: {
-                row: 7,
-                col: 4
-            }
-        },
-        {
-            type: PieceType.BISHOP,
-            color: PieceColor.WHITE,
-            position: {
-                row: 7,
-                col: 5
-            }
-        },
-        {
-            type: PieceType.KNIGHT,
-            color: PieceColor.WHITE,
-            position: {
-                row: 7,
-                col: 6
-            }
-        },
-        {
-            type: PieceType.ROOK,
-            color: PieceColor.WHITE,
-            position: {
-                row: 7,
-                col: 7
-            }
-        }
-    ]
-]
+    }
+    return newBoard;
+}
+
+export type Board = (ChessPiece|undefined)[][];

@@ -24,7 +24,7 @@ export default function BoardTile(props: BoardTileProps) {
     const [piece, setPiece] = useState<ChessPiece|undefined>();
 
     useEffect(() => {
-        setPiece(boardContext.board[props.row][props.col]);
+        setPiece(boardContext.board![props.row][props.col]);
     })
 
     const backgroundColor = (props.row + props.col) % 2 === 0? WHITE : BLACK;
@@ -33,9 +33,9 @@ export default function BoardTile(props: BoardTileProps) {
         console.log(`Tile: ${props.row}-${props.col}`)
         if (boardContext.selectedPiece && (piece === undefined || piece.color !== boardContext.myColor)) {
             console.log(boardContext.selectedPiece);
-            boardContext.makeMove(props.row, props.col);
+            boardContext.makeMove!(props.row, props.col);
         } else {
-            boardContext.selectPiece(piece);
+            if (piece && boardContext.selectPiece) boardContext.selectPiece(piece);
         }
     }
 
