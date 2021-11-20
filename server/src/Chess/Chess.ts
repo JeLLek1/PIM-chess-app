@@ -1,12 +1,16 @@
-import { off } from 'process';
 import {
   Board,
+  copyBoard,
   BoardData,
   BoardElement,
   PieceType,
   getOpositeColor,
   getPiecesData,
 } from '../repositories/additionalTypes/Board';
+
+type TShifts = {
+  [key: string]: [number, number][];
+};
 
 const posiblePromotions: PieceType[] = ['knight', 'bishop', 'rook', 'queen'];
 
@@ -48,6 +52,18 @@ const pieceMoves: number[][] = [
 ];
 const checkCenter = [7, 7];
 const checkDimensions = [15, 15];
+// prettier-ignore
+const reys: TShifts = {
+  'queen': [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1]],
+  'rook': [[-1, 0], [1, 0], [0, -1], [0, 1]],
+  'bishop': [[-1, -1], [1, 1], [-1, 1], [1, -1]],
+};
+// prettier-ignore
+const simpleAttacks: TShifts = {
+  'knight': [[1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1]],
+  'king': [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1]],
+  'pawn': [[1, 1], [1, -1]],
+}
 
 const pieceMask = new Map<PieceType, number>([
   ['pawn', 1],
@@ -71,6 +87,7 @@ export function createDefaultPosition(): BoardData {
     result: '*',
     turnColor: 'w',
     turn: 1,
+    halfMoves: 0,
   };
   function generatePawns(color: 'w' | 'b'): BoardElement[] {
     const arr = Array(8).fill(null);
@@ -100,6 +117,7 @@ export function createDefaultPosition(): BoardData {
         color: color,
         type: type,
         lastMove: -1,
+        lastHalfMove: -1,
       };
     });
   }
@@ -126,6 +144,7 @@ export function makeMove(
   promotion?: PieceType,
 ): boolean {
   const piece: BoardElement = boardData.board[from[0]][from[1]];
+  let captureOccured = false;
   // if start position has piece of current color
   if (piece === null || piece.color !== boardData.turnColor) return false;
   const patternPosition = getMovePatternPosition(from, to, piece.color);
@@ -139,10 +158,15 @@ export function makeMove(
   // first check if piece of can make given move pattern
   if (boardData.board[to[0]][to[1]] === null) {
     if (!checkPieceMovePatern(piece, patternPosition)) return false;
+    //if (!checkEnPassant()) return false;
     // TODO: check for En passant
   } else {
     if (!checkPieceAttackPatern(piece, patternPosition)) return false;
+    captureOccured = true;
   }
+  //check if not blocked by any other piece
+  if (!squereInRange(piece, boardData.board, from, to)) return false;
+
   // check promotion data
   if (!checkPromotion(piece, to, promotion)) return false;
 
@@ -155,9 +179,18 @@ export function makeMove(
   piece.lastMove = boardData.turn;
   boardData.board[from[0]][from[1]] = null;
   boardData.board[to[0]][to[1]] = piece;
-
   boardData.turnColor = getOpositeColor(boardData.turnColor);
   boardData.turn++;
+
+  if (piece.type === 'pawn' || captureOccured) {
+    boardData.halfMoves = 0;
+  } else {
+    boardData.halfMoves++;
+  }
+  // game result
+  if (boardData.halfMoves >= 50) {
+    boardData.result = '1/2-1/2';
+  }
   return true;
 }
 
@@ -261,6 +294,98 @@ function checkPromotion(
   }
 }
 
-function isEnPassant() {
+/**
+ * check if given squere is in range of piece type
+ *
+ * @param piece BoardElement
+ * @param board Board
+ * @param from [number, number]
+ * @param squere [number, number]
+ * @returns boolean
+ */
+function squereInRange(
+  piece: BoardElement,
+  board: Board,
+  from: [number, number],
+  squere: [number, number],
+): boolean {
+  if (['pawn', 'king', 'knight'].includes(piece.type)) {
+    return true;
+  }
+  if (
+    getPossibleAttackedSqueres(board, from).some(pos => {
+      if (pos[0] === squere[0] && pos[1] === squere[1]) {
+        return true;
+      }
+      return false;
+    })
+  ) {
+    return true;
+  }
   return false;
+}
+
+/**
+ * get posible attacked squeres by piece in given position
+ *
+ * @param board Board
+ * @param from [number, number]
+ * @returns [number, number][]
+ */
+function getPossibleAttackedSqueres(
+  board: Board,
+  from: [number, number],
+): [number, number][] {
+  const piece: BoardElement = board[from[0]][from[1]];
+  const squeresInRange: [number, number][] = [];
+  if (piece === null) return [];
+  if (['pawn', 'king', 'knight'].includes(piece.type)) {
+    simpleAttacks[piece.type].forEach(shift => {
+      const newPos: [number, number] = [from[0] + shift[0], from[1] + shift[1]];
+      if (!isValidPosition(newPos)) return;
+      if (
+        board[newPos[0]][newPos[1]] !== null &&
+        board[newPos[0]][newPos[1]].color === piece.color
+      ) {
+        return;
+      }
+      squeresInRange.push(newPos);
+    });
+  } else {
+    reys[piece.type].forEach(shift => {
+      let newPos: [number, number] = [...from];
+      while (true) {
+        newPos = [newPos[0] + shift[0], newPos[1] + shift[1]];
+        if (!isValidPosition(newPos)) break;
+        const newPosPiece = board[newPos[0]][newPos[1]];
+        if (newPosPiece === null) {
+          squeresInRange.push(newPos);
+          continue;
+        } else if (newPosPiece.color === piece.color) {
+          break;
+        } else {
+          squeresInRange.push(newPos);
+          break;
+        }
+      }
+    });
+  }
+  return squeresInRange;
+}
+
+/**
+ * check if given position is valid
+ *
+ * @param pos [number, number]
+ * @returns boolean
+ */
+function isValidPosition(pos: [number, number]): boolean {
+  if (pos[0] < 0 || pos[0] > 7 || pos[1] < 0 || pos[1] > 7) {
+    return false;
+  }
+  return true;
+}
+
+function checkEnPassant(): boolean {
+  return true;
 }

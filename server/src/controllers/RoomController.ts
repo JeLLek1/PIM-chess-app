@@ -187,6 +187,12 @@ export function makeMove(
     to: payload.to,
     promotion: payload.promotion,
   });
+  if (room.boardData.result !== '*') {
+    sendToRoommates(room, OutgoingEventType.GAME_ENDED, {
+      roomId: room.roomId,
+      result: room.boardData.result,
+    });
+  }
 }
 
 export default {

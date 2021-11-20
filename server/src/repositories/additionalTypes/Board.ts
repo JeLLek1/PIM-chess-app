@@ -19,6 +19,7 @@ export type BoardData = {
   result: Result;
   turnColor: Color;
   turn: number;
+  halfMoves: number; // moves without pawn or capture
 };
 
 export type BoardElement = {
@@ -83,6 +84,18 @@ export function getPiecesData(boardData: BoardData): TPiecesData {
   });
 
   return out;
+}
+
+export function copyBoard(board: Board) {
+  return board.map(row => {
+    return row.map(el => {
+      if (el === null) {
+        return null;
+      } else {
+        return { ...el };
+      }
+    });
+  });
 }
 
 export function getOpositeColor(color: Color): Color {

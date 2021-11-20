@@ -74,6 +74,7 @@ if __name__ == "__main__":
   commands = ['help', 'exit', 'move']
   while inputCommand != 'exit':
     print('\n')
+    print(f"half moves: {roomData['boardData']['halfMoves']}, turn: {roomData['boardData']['turn']}, result: {roomData['boardData']['result']}")
     printBoard(roomData['boardData']['board'])
 
     currentColor = roomData['boardData']['turnColor']
