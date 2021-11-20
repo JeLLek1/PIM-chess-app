@@ -123,6 +123,20 @@ export function movePiece(
   return true;
 }
 
+export function possibleMoves(
+  room: Room,
+  from: string,
+): any {
+  const pos = positionToIndex(from);
+  if (!room.boardData) throw new Error("Game not started.")
+  else {
+    return {
+      position: from,
+      movesBoard: Chess.getPossibleMoves(room.boardData, pos)
+    };
+  }
+}
+
 export default {
   createRoom,
   addUserToRoom,
@@ -134,4 +148,5 @@ export default {
   createBoard,
   getUsersOfRoom,
   movePiece,
+  possibleMoves,
 };

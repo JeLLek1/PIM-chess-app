@@ -195,6 +195,32 @@ export function makeMove(
   }
 }
 
+export function checkForMove(
+  ws: WebSocket,
+  user: User,
+  payload: PieceMovePayload
+): void {
+  if (
+    !payload ||
+    typeof payload.roomId !== 'string' ||
+    typeof payload.from !== 'string'
+  ) {
+    throw new ValidationError('Wrong format');
+  }
+  const room = RoomService.findRoom(payload.roomId);
+  if (!room) {
+    throw new ValidationError("Room doesn't exist.");
+  }
+  if (room.boardData === null) {
+    throw new ValidationError('The game has not started yet');
+  }
+
+  ws.send(createOutgoingMessage(
+    OutgoingEventType.MOVES_LIST,
+    RoomService.possibleMoves(room, payload.from)
+  ));
+}
+
 export default {
   createRoom,
   joinRoom,
@@ -202,4 +228,5 @@ export default {
   leaveAllRooms,
   start,
   makeMove,
+  checkForMove
 };

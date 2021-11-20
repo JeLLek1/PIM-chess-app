@@ -21,6 +21,20 @@ def printBoard(board):
         s += '.  '
     print(s)
   print('    -----------------------')
+
+def printMoves(movesBoard):
+  print('------ MOVES ------')
+  print('    A  B  C  D  E  F  G  H')
+  print('    -----------------------')
+  for idx, row in enumerate(reversed(movesBoard)):
+    s = str(8 - idx) + ' | '
+    for cell in row:
+      if cell:
+        s += 't' + '  '
+      else:
+        s += 'n  '
+    print(s)
+  print('    -----------------------')
   
 try:
   address = config['DEFAULT']['ADDRESS']
@@ -71,7 +85,7 @@ if __name__ == "__main__":
   #   currentUser = (user2Socket, user2Data)
 
   inputCommand = ''
-  commands = ['help', 'exit', 'move']
+  commands = ['help', 'exit', 'move', 'check']
   while inputCommand != 'exit':
     print('\n')
     print(f"half moves: {roomData['boardData']['halfMoves']}, turn: {roomData['boardData']['turn']}, result: {roomData['boardData']['result']}")
@@ -110,6 +124,14 @@ if __name__ == "__main__":
         print('Error received: ' + tmp['data'])
       
       print(tmp['type'])
+    elif enteredCommand == commands[3]:
+      frm = inputCommand.split()[1]
+      currentUser[0].send(json.dumps({'type': 'CHECK_FOR_MOVE', 'data':{'roomId': roomData['roomId'], 'from': frm}}))
+      tmp = json.loads(currentUser[0].recv())
+      if tmp['type'] == 'ERROR':
+        print('Error received: ' + tmp['data'])
+      else:
+        printMoves(tmp['data']['movesBoard'])
     else:
       print('Unrecognized command')
 

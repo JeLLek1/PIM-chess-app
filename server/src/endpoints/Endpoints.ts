@@ -12,4 +12,5 @@ export const endpoints = new Map<
   [IncomingEventType.LEAVE_ROOM, RoomController.leaveRoom],
   [IncomingEventType.START, RoomController.start],
   [IncomingEventType.MAKE_MOVE, RoomController.makeMove],
+  [IncomingEventType.CHECK_FOR_MOVE, RoomController.checkForMove],
 ]);

@@ -7,6 +7,7 @@ import {
   getOpositeColor,
   getPiecesData,
 } from '../repositories/additionalTypes/Board';
+import { createBoard } from '../services/RoomService';
 
 type TShifts = {
   [key: string]: [number, number][];
@@ -75,15 +76,23 @@ const pieceMask = new Map<PieceType, number>([
 ]);
 
 /**
+ * Creates board filled with null
+ * @return {Board}
+ */
+function createEmptyBoard(): Board {
+  return Array(8)
+    .fill(null)
+    .map(() => Array(8).fill(null));
+}
+
+/**
  * prepare default board position
  *
- * @returns BoardData
+ * @returns {BoardData}
  */
 export function createDefaultPosition(): BoardData {
   const boardData: BoardData = {
-    board: Array(8)
-      .fill(null)
-      .map(() => Array(8).fill(null)),
+    board: createEmptyBoard(),
     result: '*',
     turnColor: 'w',
     turn: 1,
@@ -131,11 +140,11 @@ export function createDefaultPosition(): BoardData {
 /**
  * check if given move for given boar is valis
  *
- * @param boardData BoardData
- * @param from [number, number]
- * @param to [number, number]
- * @param promotion PieceType
- * @returns boolean
+ * @param {BoardData} boardData
+ * @param {[number, number]} from
+ * @param {[number, number]} to
+ * @param {PieceType} promotion
+ * @returns {boolean}
  */
 export function makeMove(
   boardData: BoardData,
@@ -197,9 +206,9 @@ export function makeMove(
 /**
  * check if given move pattern is valid
  *
- * @param piece BoardElement
- * @param patternPosition [number, number]
- * @returns boolean
+ * @param {BoardElement} piece
+ * @param {[number, number]} patternPosition
+ * @returns {boolean}
  */
 function checkPieceMovePatern(
   piece: BoardElement,
@@ -226,9 +235,9 @@ function checkPieceMovePatern(
 /**
  * check if given attack pattern is valid
  *
- * @param piece BoardElement
- * @param patternPosition [number, number]
- * @returns boolean
+ * @param {BoardElement} piece
+ * @param {[number, number]} patternPosition
+ * @returns {boolean}
  */
 function checkPieceAttackPatern(
   piece: BoardElement,
@@ -247,9 +256,9 @@ function checkPieceAttackPatern(
 /**
  * return move pattern position
  *
- * @param from [number, number]
- * @param to [number, number]
- * @returns [number, number]
+ * @param {[number, number]} from
+ * @param {[number, number]} to
+ * @returns {[number, number]}
  */
 function getMovePatternPosition(
   from: [number, number],
@@ -266,12 +275,12 @@ function getMovePatternPosition(
 /**
  * check if promotion data is valid
  *
- * @param piece BoardElement
- * @param from [number, number]
- * @param to [number, number]
- * @param promotion PieceType
+ * @param {BoardElement} piece
+ * @param {[number, number]} from
+ * @param {[number, number]} to
+ * @param {PieceType} promotion
  *
- * @returns boolean
+ * @returns {boolean}
  */
 function checkPromotion(
   piece: BoardElement,
@@ -297,11 +306,11 @@ function checkPromotion(
 /**
  * check if given squere is in range of piece type
  *
- * @param piece BoardElement
- * @param board Board
- * @param from [number, number]
- * @param squere [number, number]
- * @returns boolean
+ * @param {BoardElement} piece
+ * @param {Board} board
+ * @param {[number, number]} from
+ * @param {[number, number]} squere
+ * @returns {boolean}
  */
 function squereInRange(
   piece: BoardElement,
@@ -328,9 +337,9 @@ function squereInRange(
 /**
  * get posible attacked squeres by piece in given position
  *
- * @param board Board
- * @param from [number, number]
- * @returns [number, number][]
+ * @param {Board} board
+ * @param {[number, number]} from
+ * @returns {[number, number][]}
  */
 function getPossibleAttackedSqueres(
   board: Board,
@@ -376,8 +385,8 @@ function getPossibleAttackedSqueres(
 /**
  * check if given position is valid
  *
- * @param pos [number, number]
- * @returns boolean
+ * @param {[number, number]} pos
+ * @returns {boolean}
  */
 function isValidPosition(pos: [number, number]): boolean {
   if (pos[0] < 0 || pos[0] > 7 || pos[1] < 0 || pos[1] > 7) {
@@ -386,6 +395,191 @@ function isValidPosition(pos: [number, number]): boolean {
   return true;
 }
 
-function checkEnPassant(): boolean {
-  return true;
+/**
+ * calcualates possible moves for given position and board
+ *
+ * @param {[number, number]} from
+ * @returns {Board}
+ */
+export function getPossibleMoves(
+  boardData: BoardData,
+  from: [number, number],
+): boolean[][] {
+  const board = boardData.board;
+  const piece = board[from[0]][from[1]];
+  let moveBoard = Array(8)
+    .fill(false)
+    .map(() => Array(8).fill(false));
+  // console.log(boardData.board)
+
+  const x = from[0],
+    y = from[1];
+
+  function movesDiag(): boolean[][] {
+    const moveBoard = Array(8)
+      .fill(false)
+      .map(() => Array(8).fill(false));
+    let stopTR = false,
+      stopTL = false,
+      stopBR = false,
+      stopBL = false;
+
+    for (let i = 1; i < 8; i++) {
+      if (!stopTL) {
+        if (x - i >= 0 && y + i < 8 && board[x - i][y + i] === null) {
+          moveBoard[x - i][y + i] = true;
+        } else {
+          if (
+            x - i >= 0 &&
+            y + i < 8 &&
+            board[x - i][y + i].color !== piece.color
+          ) {
+            moveBoard[x - i][y + i] = true;
+          }
+          stopTL = true;
+        }
+      }
+      if (!stopTR) {
+        if (x + i < 8 && y + i < 8 && board[x + i][y + i] === null) {
+          moveBoard[x + i][y + i] = true;
+        } else {
+          if (
+            x + i < 8 &&
+            y + i < 8 &&
+            board[x + i][y + i].color !== piece.color
+          ) {
+            moveBoard[x + i][y + i] = true;
+          }
+          stopTR = true;
+        }
+      }
+      if (!stopBL) {
+        if (x - i >= 0 && y - i >= 0 && board[x - i][y - i] === null) {
+          moveBoard[x - i][y - i] = true;
+        } else {
+          if (
+            x - i >= 0 &&
+            y - i >= 0 &&
+            board[x - i][y - i].color !== piece.color
+          ) {
+            moveBoard[x - i][y - i] = true;
+          }
+          stopBL = true;
+        }
+      }
+      if (!stopBR) {
+        if (x + i < 8 && y - i >= 0 && board[x + i][y - i] === null) {
+          moveBoard[x + i][y - i] = true;
+        } else {
+          if (
+            x + i < 8 &&
+            y - i >= 0 &&
+            board[x + i][y - i].color !== piece.color
+          ) {
+            moveBoard[x + i][y - i] = true;
+          }
+          stopBR = true;
+        }
+      }
+    }
+    return moveBoard;
+  }
+
+  function movesStraight(): boolean[][] {
+    const moveBoard = Array(8)
+      .fill(false)
+      .map(() => Array(8).fill(false));
+    let stopT = false,
+      stopL = false,
+      stopR = false,
+      stopB = false;
+
+    for (let i = 1; i < 8; i++) {
+      if (!stopT) {
+        if (y + i < 8 && board[x][y + i] === null) {
+          moveBoard[x][y + i] = true;
+        } else {
+          if (y + i < 8 && board[x][y + i].color !== piece.color) {
+            moveBoard[x][y + i] = true;
+          }
+          stopT = true;
+        }
+      }
+      if (!stopR) {
+        if (x + i < 8 && board[x + i][y] === null) {
+          moveBoard[x + i][y] = true;
+        } else {
+          if (x + i < 8 && board[x + i][y].color !== piece.color) {
+            moveBoard[x + i][y] = true;
+          }
+          stopR = true;
+        }
+      }
+      if (!stopB) {
+        if (y - i >= 0 && board[x][y - i] === null) {
+          moveBoard[x][y - i] = true;
+        } else {
+          if (y - i >= 0 && board[x][y - i].color !== piece.color) {
+            moveBoard[x][y - 1] = true;
+          }
+          stopB = true;
+        }
+      }
+      if (!stopL) {
+        if (x - i >= 0 && board[x - i][y] === null) {
+          moveBoard[x - i][y] = true;
+        } else {
+          if (x - i >= 0 && board[x - i][y].color !== piece.color) {
+            moveBoard[x - i][y] = true;
+          }
+          stopL = true;
+        }
+      }
+    }
+    return moveBoard;
+  }
+
+  if (piece === null) return moveBoard;
+  switch (piece.type) {
+    case 'pawn': {
+      break;
+    }
+    case 'knight': {
+      for (let i = -2; i <= 2; i++) {
+        for (let j = -2; j <= 2; j++) {
+          if (x + i >= 0 && x + i <= 7 && y + j >= 0 && y + j <= 7) {
+            moveBoard[x + i][y + j] = !!(
+              pieceMoves[checkCenter[0] + i][checkCenter[1] + j] &
+                pieceMask.get('knight') &&
+              (!board[x + i][y + j] ||
+                board[x + i][y + j].color !== piece.color)
+            );
+          }
+        }
+      }
+      break;
+    }
+    case 'bishop': {
+      moveBoard = movesDiag();
+      break;
+    }
+    case 'rook': {
+      moveBoard = movesStraight();
+      break;
+    }
+    case 'queen': {
+      const tmp1 = movesDiag();
+      const tmp2 = movesStraight();
+      moveBoard = tmp1.map((e, i) => {
+        return e.map((c, j) => {
+          return c || tmp2[i][j];
+        });
+      });
+      break;
+    }
+    case 'king': {
+      break;
+    }
+  }
+  return moveBoard;
 }
