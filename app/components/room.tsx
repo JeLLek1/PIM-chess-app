@@ -1,17 +1,19 @@
-import React, {useState} from "react";
+import React, {useContext, useState} from "react";
 import { View, Text, StyleSheet, Button, Image, Modal, TextInput} from 'react-native';
+import { BoardContext } from "../contexts/board_context";
+import KnightWhite from "./icons/knight_white";
 
 //import "../assets/room-icon.png";
 
-const Room = (prop: {name: string}) => {
+const Room = (prop: {name: string, id: string, navigation: any}) => {
     const [ifVisible, setIsVisible] = useState(false)
     const [nick, setNick] = useState()
-
+    const boardContext = useContext(BoardContext);
     return (
         <>
         <View style={styles.room}>
             <View style={styles.roomLeft}>
-                <Image source={require("../assets/room-icon.png")} style={styles.icon}/>
+                <KnightWhite/>
                 <Text style={styles.roomText}>{prop.name}</Text>
             </View>
             <View style={styles.button}>
@@ -42,7 +44,11 @@ const Room = (prop: {name: string}) => {
         )
       }
     function joinRoom(){
+        if (boardContext) {
+          boardContext.joinRoom!(prop.id)
+        }
         setIsVisible(false)
+        prop.navigation.navigate("BoardScreen")
     }
 }
 

@@ -10,7 +10,6 @@ export default function BoardScreen(props: any) {
     
     return (
         <View style={style.container}>
-            <Button onPress={boardContext.joinRoom!} title={"Join free room"}></Button>
             <Button onPress={boardContext.startGame!} title={"START GAME"}></Button>
             <Text>User id: {boardContext.userId}</Text>
             <Text>Enemy id: {boardContext.enemyId}</Text>

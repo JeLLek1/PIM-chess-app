@@ -3,6 +3,7 @@ import { Board, ChessPiece, convertBoardData, convertColorStringToColor, convert
 import { API } from '@env';
 
 export interface BoardContextModel {
+    allRooms: any[],
     board?: Board,
     myColor?: PieceColor,
     currentColor?: PieceColor,
@@ -12,31 +13,28 @@ export interface BoardContextModel {
     //====
     userId?: string,
     enemyId?: string,
-    joinRoom?: () => void;
+    joinRoom?: (roomId: string) => void;
     startGame?: () => void;
+    createRoom?: (name: string) => void;
     //====
 
     makeMove?: (row: number, col: number) => void,
     selectPiece?: (piece: ChessPiece) => void
 }
 
-export const BoardContext = React.createContext<BoardContextModel>({});
+export const BoardContext = React.createContext<BoardContextModel>({allRooms: []});
 
 export const BoardProvider = ( {children}: any ) => {
     const [board, setBoard] = useState<Board>();
     const [myColor, setMyColor] = useState<PieceColor>();
     const [currentColor, setCurrentColor] = useState<PieceColor>(PieceColor.WHITE);
     const [selectedPiece, setSelectedPiece] = useState<ChessPiece|undefined>(undefined);
-
     const [roomId, setRoomId] = useState<string>();
-
-    // ========== BEGIN TEST CODE ==========
     const [ws, setWs] = useState<WebSocket>(new WebSocket(`ws://${API}/`));
     const [socketMsg, setSocketMsg] = useState<any>();
-    // TO DO usunąć/zmienić gdy już będzie odpowiednia obsługa websocketu
     const [userId, setUserId] = useState<string>("example");
     const [enemyId, setEnemyId] = useState<string>("");
-    const [allRooms, setAllRooms] = useState<any>();
+    const [allRooms, setAllRooms] = useState<any[]>([]);
 
     //Ze względu na opóźnienia związane z odczytem stanu kolor gracza ustawiamy dopiero po tym jak ustawimy wiadomośc o rozpoczetej grze
     useEffect(() => {
@@ -54,7 +52,7 @@ export const BoardProvider = ( {children}: any ) => {
         }
     },[socketMsg])
 
-    //Hook efektu reagujacy na otrzymane wiadomości od websocketu. Być może lepiej jest to przenieść to jakieogś oddzielneog kontekstu
+    //Hook efektu reagujacy na otrzymane wiadomości od websocketu
     useEffect(() => {
         const socket = ws;
         socket.onopen = () => {
@@ -95,7 +93,7 @@ export const BoardProvider = ( {children}: any ) => {
         }
     },[])
 
-    //Poniższe funkcje odpowiadają za łączenie się pokojem i rozpoczynanie gry, powstały jako szybkie obejście braku działającego UI pokoi
+    //Poniższe funkcje odpowiadają za łączenie się pokojem i rozpoczynanie gry
 
     const onListRoomsMessage = (message: any) => {
         if (message.data.length === 0) {
@@ -142,24 +140,7 @@ export const BoardProvider = ( {children}: any ) => {
         }))
     }
 
-    //Ewidentnie do usunięcia bo to beznndziejny kawałek kodu :V ale póki nie ma UI dla pokoi to nie niech tak zostanie
-    const joinFreeRoom = () => {
-        if (allRooms.length === 0) {
-            createBoard(`My room ${userId}`);
-            return;
-        } 
-        for (let i = 0; i < allRooms.length; i++) {
-            console.log(allRooms[i].user1);
-            if (!allRooms[i].user1 || !allRooms[i].user2) {
-                if (allRooms[i].user1.id === userId) continue;
-                joinBoard(allRooms[i].roomId);
-                return;
-            }
-        }
-        createBoard(`My room ${userId}`);
-    }
-
-    const joinBoard = (roomId: string) => {
+    const joinRoom = (roomId: string) => {
         console.log(`joining room ${roomId}`);
         ws.send(JSON.stringify({
             type: 'JOIN_ROOM',
@@ -169,7 +150,7 @@ export const BoardProvider = ( {children}: any ) => {
         }))
     }
 
-    const createBoard = (roomName: string) => {
+    const createRoom = (roomName: string) => {
         ws.send(JSON.stringify({
             type: 'CREATE_ROOM',
             data: {
@@ -177,9 +158,6 @@ export const BoardProvider = ( {children}: any ) => {
             }
         }))
     }
-
-    // ========== END TEST CODE ==========
-
 
     //ustawianie mapy początkowej, miedzyczasie wywołuje się hook efektu ustalający kolory graczy
     const onGameStartedMessage = (msg: any) => {
@@ -226,6 +204,7 @@ export const BoardProvider = ( {children}: any ) => {
 
     
     const value = {
+        allRooms: allRooms,
         board: board,
         myColor: myColor,
         currentColor: currentColor,
@@ -233,7 +212,8 @@ export const BoardProvider = ( {children}: any ) => {
         roomId: roomId,
         userId: userId,
         enemyId: enemyId,
-        joinRoom: joinFreeRoom,
+        joinRoom: joinRoom,
+        createRoom: createRoom,
         startGame: startGameMessage,
         makeMove,
         selectPiece
