@@ -6,6 +6,9 @@ import {
   PieceType,
   getOpositeColor,
   getPiecesData,
+  TPiecesData,
+  Color,
+  TPieceData,
 } from '../repositories/additionalTypes/Board';
 import { createBoard } from '../services/RoomService';
 
@@ -179,15 +182,28 @@ export function makeMove(
   // check promotion data
   if (!checkPromotion(piece, to, promotion)) return false;
 
-  const piecesData = getPiecesData(boardData);
+  const featureBoard = copyBoard(boardData.board);
+  const featurePiece: BoardElement = featureBoard[from[0]][from[1]];
+  featureBoard[from[0]][from[1]] = null;
+  featureBoard[to[0]][to[1]] = featurePiece;
+  if (typeof promotion !== 'undefined') {
+    featurePiece.type = promotion;
+  }
+
+  const faturePiecesData: TPiecesData = getPiecesData(featureBoard);
+  // get attacked squares
+  const featureAttackedSquares = getAttackedSqares(
+    faturePiecesData,
+    featureBoard,
+    getOpositeColor(boardData.turnColor),
+  );
+  // check if king can move on given squere
+  const futureKingPos = faturePiecesData[`${piece.color}king`].position;
+  if (featureAttackedSquares[futureKingPos[0]][futureKingPos[1]]) return false;
 
   // make move
-  if (typeof promotion !== 'undefined') {
-    piece.type = promotion;
-  }
-  piece.lastMove = boardData.turn;
-  boardData.board[from[0]][from[1]] = null;
-  boardData.board[to[0]][to[1]] = piece;
+  featurePiece.lastMove = boardData.turn;
+  boardData.board = featureBoard;
   boardData.turnColor = getOpositeColor(boardData.turnColor);
   boardData.turn++;
 
@@ -322,7 +338,7 @@ function squereInRange(
     return true;
   }
   if (
-    getPossibleAttackedSqueres(board, from).some(pos => {
+    getPossibleAttackedSquares(board, from).some(pos => {
       if (pos[0] === squere[0] && pos[1] === squere[1]) {
         return true;
       }
@@ -335,22 +351,27 @@ function squereInRange(
 }
 
 /**
- * get posible attacked squeres by piece in given position
+ * get posible attacked squares by piece in given position
  *
  * @param {Board} board
  * @param {[number, number]} from
  * @returns {[number, number][]}
  */
-function getPossibleAttackedSqueres(
+function getPossibleAttackedSquares(
   board: Board,
   from: [number, number],
 ): [number, number][] {
   const piece: BoardElement = board[from[0]][from[1]];
-  const squeresInRange: [number, number][] = [];
+  const squaresInRange: [number, number][] = [];
   if (piece === null) return [];
   if (['pawn', 'king', 'knight'].includes(piece.type)) {
     simpleAttacks[piece.type].forEach(shift => {
-      const newPos: [number, number] = [from[0] + shift[0], from[1] + shift[1]];
+      let newPos: [number, number] = null;
+      if (piece.type == 'pawn' && piece.color == 'b') {
+        newPos = [from[0] - shift[0], from[1] - shift[1]];
+      } else {
+        newPos = [from[0] + shift[0], from[1] + shift[1]];
+      }
       if (!isValidPosition(newPos)) return;
       if (
         board[newPos[0]][newPos[1]] !== null &&
@@ -358,7 +379,7 @@ function getPossibleAttackedSqueres(
       ) {
         return;
       }
-      squeresInRange.push(newPos);
+      squaresInRange.push(newPos);
     });
   } else {
     reys[piece.type].forEach(shift => {
@@ -368,18 +389,18 @@ function getPossibleAttackedSqueres(
         if (!isValidPosition(newPos)) break;
         const newPosPiece = board[newPos[0]][newPos[1]];
         if (newPosPiece === null) {
-          squeresInRange.push(newPos);
+          squaresInRange.push(newPos);
           continue;
         } else if (newPosPiece.color === piece.color) {
           break;
         } else {
-          squeresInRange.push(newPos);
+          squaresInRange.push(newPos);
           break;
         }
       }
     });
   }
-  return squeresInRange;
+  return squaresInRange;
 }
 
 /**
@@ -393,6 +414,23 @@ function isValidPosition(pos: [number, number]): boolean {
     return false;
   }
   return true;
+}
+
+function getAttackedSqares(
+  piecesData: TPiecesData,
+  board: Board,
+  color: Color,
+): boolean[][] {
+  const attackedSquares = Array.from({ length: 8 }, () =>
+    Array.from({ length: 8 }, () => false),
+  );
+  piecesData[color].forEach(pieceData => {
+    getPossibleAttackedSquares(board, pieceData.position).forEach(pos => {
+      attackedSquares[pos[0]][pos[1]] = true;
+    });
+  });
+
+  return attackedSquares;
 }
 
 /**

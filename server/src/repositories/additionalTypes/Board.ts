@@ -34,10 +34,10 @@ export type TPieceData = {
 };
 
 export type TPiecesData = {
-  white: TPieceData[];
-  black: TPieceData[];
-  whiteKing: TPieceData;
-  blackKing: TPieceData;
+  w: TPieceData[];
+  b: TPieceData[];
+  wking: TPieceData;
+  bking: TPieceData;
 };
 
 export function positionToIndex(pos: string): [number, number] {
@@ -54,15 +54,15 @@ export function positionToIndex(pos: string): [number, number] {
   return [numPos, letterPos];
 }
 
-export function getPiecesData(boardData: BoardData): TPiecesData {
+export function getPiecesData(board: Board): TPiecesData {
   const out: TPiecesData = {
-    white: [],
-    black: [],
-    whiteKing: null,
-    blackKing: null,
+    w: [],
+    b: [],
+    wking: null,
+    bking: null,
   };
 
-  boardData.board.forEach((row, y) => {
+  board.forEach((row, y) => {
     row.forEach((piece, x) => {
       if (piece === null) return;
       const pieceData: TPieceData = {
@@ -70,14 +70,14 @@ export function getPiecesData(boardData: BoardData): TPiecesData {
         position: [y, x],
       };
       if (piece.color === 'w') {
-        out.white.push(pieceData);
+        out.w.push(pieceData);
         if (piece.type === 'king') {
-          out.whiteKing = pieceData;
+          out.wking = pieceData;
         }
       } else {
-        out.black.push(pieceData);
+        out.b.push(pieceData);
         if (piece.type === 'king') {
-          out.blackKing = pieceData;
+          out.bking = pieceData;
         }
       }
     });
@@ -106,4 +106,3 @@ export function getOpositeColor(color: Color): Color {
 export function indexToPosition(index: [number, number]): string {
   return index[0] + 1 + String.fromCharCode('A'.charCodeAt(0) + index[1]);
 }
-
