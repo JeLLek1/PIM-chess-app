@@ -12,7 +12,7 @@ export default function App() {
   return (
     <BoardProvider>
       <View style={styles.container}>
-        <RoomScreen></RoomScreen>
+        <BoardScreen></BoardScreen>
       </View>
     </BoardProvider>
   );

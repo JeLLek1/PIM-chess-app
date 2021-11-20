@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Board, ChessPiece, convertBoardData, convertColorStringToColor, convertPosToAddress, PieceColor } from "../models/chess";
+import { API } from '@env';
 
 export interface BoardContextModel {
     board?: Board,
@@ -30,7 +31,7 @@ export const BoardProvider = ( {children}: any ) => {
     const [roomId, setRoomId] = useState<string>();
 
     // ========== BEGIN TEST CODE ==========
-    const [ws, setWs] = useState<WebSocket>(new WebSocket("ws://192.168.1.2:4000/"));
+    const [ws, setWs] = useState<WebSocket>(new WebSocket(`ws://${API}/`));
     const [socketMsg, setSocketMsg] = useState<any>();
     // TO DO usunąć/zmienić gdy już będzie odpowiednia obsługa websocketu
     const [userId, setUserId] = useState<string>("example");

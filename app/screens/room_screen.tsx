@@ -70,25 +70,25 @@ export default function RoomScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8EAED'
+    backgroundColor: '#E8EAED',
   },
-  modal:{
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+  modal: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     position: 'relative',
-    width:"40%",
-    height:"40%"
+    width: '40%',
+    height: '40%',
   },
-  input:{
-    position: "relative",
-    justifyContent: "space-between",
-    allignItems: "center",
+  input: {
+    position: 'relative',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 15,
     paddingHorizontal: 15,
     backgroundColor: '#FFF',
     borderRadius: 60,
-    borderColor: "#C0C0C0",
+    borderColor: '#C0C0C0',
     borderWidth: 1,
     width: '50%',
   },
@@ -98,18 +98,16 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 24,
-    fontWeight: "bold"
+    fontWeight: 'bold',
   },
-  roomList: {
-
-  },
-  buttonText:{
+  roomList: {},
+  buttonText: {
     maxWidth: '80%',
- },
-  complete:{
+  },
+  complete: {
     position: 'relative',
-    allignItems: 'center',
-    width:"30%"
+    alignItems: 'center',
+    width: '30%',
   },
   addButton: {
     position: 'absolute',
@@ -119,5 +117,5 @@ const styles = StyleSheet.create({
     //flexDirection: 'row',
     justifyContent: 'space-between',
     //alignItems: 'center'
-  }
+  },
 });

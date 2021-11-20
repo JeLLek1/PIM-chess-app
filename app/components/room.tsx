@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     input:{
         position: "relative",
         justifyContent: "space-between",
-        allignItems: "center",
+        alignItems: "center",
         paddingVertical: 15,
         paddingHorizontal: 15,
         backgroundColor: '#FFF',
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
       },
       complete:{
         position: 'relative',
-        allignItems: 'center',
+        alignItems: 'center',
         width:"30%"
       },
     modal:{
