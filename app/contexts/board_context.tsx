@@ -12,14 +12,19 @@ export interface BoardContextModel {
 
     //====
     userId?: string,
+    userName?: string,
     enemyId?: string,
+    enemyName?: string,
+    isFirst?: boolean,
     joinRoom?: (roomId: string) => void;
     startGame?: () => void;
     createRoom?: (name: string) => void;
     //====
 
     makeMove?: (row: number, col: number) => void,
-    selectPiece?: (piece: ChessPiece) => void
+    selectPiece?: (piece: ChessPiece) => void,
+
+    ws?: WebSocket
 }
 
 export const BoardContext = React.createContext<BoardContextModel>({allRooms: []});
@@ -32,9 +37,12 @@ export const BoardProvider = ( {children}: any ) => {
     const [roomId, setRoomId] = useState<string>();
     const [ws, setWs] = useState<WebSocket>(new WebSocket(`ws://${API}/`));
     const [socketMsg, setSocketMsg] = useState<any>();
-    const [userId, setUserId] = useState<string>("example");
+    const [userId, setUserId] = useState<string>("");
     const [enemyId, setEnemyId] = useState<string>("");
+    const [userName, setUserName] = useState<string>("");
+    const [enemyName, setEnemyName] = useState<string>("");
     const [allRooms, setAllRooms] = useState<any[]>([]);
+    const [isFirst, setIsFirst] = useState<boolean>(false);
 
     //Ze względu na opóźnienia związane z odczytem stanu kolor gracza ustawiamy dopiero po tym jak ustawimy wiadomośc o rozpoczetej grze
     useEffect(() => {
@@ -77,6 +85,9 @@ export const BoardProvider = ( {children}: any ) => {
             if (msg.type === 'PARTICIPANT_JOINED_ROOM') {
                 onEnemyJoinedMessage(msg);
             }
+            if (msg.typ === 'PARTICIPANT_ABANDONED_ROOM') {
+                onEnemyLeftMessage(msg);
+            }
             if (msg.type === 'GAME_STARTED') {
                 onGameStartedMessage(msg);
             }
@@ -107,6 +118,7 @@ export const BoardProvider = ( {children}: any ) => {
     const onUserCreatedMessage = (message: any) => {
         if (message.data.userId) {
             setUserId(message.data.userId);
+            setUserName(message.data.userName);
         }
     }
 
@@ -115,6 +127,7 @@ export const BoardProvider = ( {children}: any ) => {
             setRoomId(message.data.roomId);
         }
         if (message.data.user1) {
+            setIsFirst(false);
             setEnemyId(message.data.user1.userId);
         }
     }
@@ -122,12 +135,26 @@ export const BoardProvider = ( {children}: any ) => {
     const onRoomCreatedMessage = (message: any) => {
         if (message.data.roomId) {
             setRoomId(message.data.roomId);
+            setIsFirst(true);
         }
     }
 
     const onEnemyJoinedMessage = (message: any) => {
         if (message.data.user2.userId) {
             setEnemyId(message.data.user2.userId);
+            setEnemyName(message.data.user2.userName);
+        }
+    }
+
+    const onEnemyLeftMessage = (message: any) => {
+        console.log(message);
+        if (message.data.roomId) {
+            setRoomId(message.data.roomId);
+        }
+        setEnemyId("");
+        setEnemyName("");
+        if (message.data.user1 === userId) {
+            setIsFirst(true);
         }
     }
 
@@ -212,11 +239,15 @@ export const BoardProvider = ( {children}: any ) => {
         roomId: roomId,
         userId: userId,
         enemyId: enemyId,
+        userName: userName,
+        enemyName: enemyName,
+        isFirst: isFirst,
         joinRoom: joinRoom,
         createRoom: createRoom,
         startGame: startGameMessage,
         makeMove,
-        selectPiece
+        selectPiece,
+        ws: ws,
     }
 
     return (
