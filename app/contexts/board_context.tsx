@@ -30,7 +30,7 @@ export const BoardProvider = ( {children}: any ) => {
 
     const [roomId, setRoomId] = useState<string>();
 
-    // ========== BEGIN TEST CODE ==========
+    // ========== BEGIN TEST CODE ========== 
     const [ws, setWs] = useState<WebSocket>(new WebSocket(`ws://${API}/`));
     const [socketMsg, setSocketMsg] = useState<any>();
     // TO DO usunąć/zmienić gdy już będzie odpowiednia obsługa websocketu
