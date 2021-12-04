@@ -29,7 +29,7 @@ export interface BoardContextModel {
 
 export const BoardContext = React.createContext<BoardContextModel>({allRooms: []});
 
-export const BoardProvider = ( {children}: any ) => {
+export const BoardProvider = ( {children}: any ) => { 
     const [board, setBoard] = useState<Board>();
     const [myColor, setMyColor] = useState<PieceColor>();
     const [currentColor, setCurrentColor] = useState<PieceColor>(PieceColor.WHITE);

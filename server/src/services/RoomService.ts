@@ -47,10 +47,10 @@ export function removeUserFromRoom(room: Room, user: User): boolean {
   } else {
     return false;
   }
-  if (room.user1 === null){
-    if(room.user2 === null){
+  if (room.user1 === null) {
+    if (room.user2 === null) {
       RoomRepository.deleteRoom(room.roomId);
-    }else{
+    } else {
       // change main player of the room
       room.user1 = room.user2;
       room.user2 = null;
@@ -76,24 +76,26 @@ export function getRoomsByUser(user: User): Room[] {
   return RoomRepository.getRoomsByUserId(user.userId);
 }
 
-export function createBoard(room : Room): Room {
+export function createBoard(room: Room): Room {
   room.boardData = Chess.createDefaultPosition();
 
   return room;
 }
 
-export function getUsersOfRoom(room : Room): User[] {
+export function getUsersOfRoom(room: Room): User[] {
   const existingRoom = room;
   if (existingRoom !== null) {
-    return [existingRoom.user1, existingRoom.user2].filter(user => user !== null);
+    return [existingRoom.user1, existingRoom.user2].filter(
+      user => user !== null,
+    );
   }
   return [];
 }
 
-export function getUserColor(room: Room, user: User): Color|null {
-  if(room.user1.userId === user.userId){
+export function getUserColor(room: Room, user: User): Color | null {
+  if (room.user1.userId === user.userId) {
     return room.user1Color;
-  }else if(room.user2.userId === user.userId){
+  } else if (room.user2.userId === user.userId) {
     return getOpositeColor(room.user1Color);
   }
   return null;
@@ -120,19 +122,18 @@ export function movePiece(
     return false;
   }
 
+  Chess.checkGameResult(room.boardData);
+
   return true;
 }
 
-export function possibleMoves(
-  room: Room,
-  from: string,
-): any {
+export function possibleMoves(room: Room, from: string): any {
   const pos = positionToIndex(from);
-  if (!room.boardData) throw new Error("Game not started.")
+  if (!room.boardData) throw new Error('Game not started.');
   else {
     return {
       position: from,
-      movesBoard: Chess.getPossibleMoves(room.boardData, pos)
+      movesBoard: Chess.getPossibleMoves(room.boardData, pos),
     };
   }
 }
