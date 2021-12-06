@@ -6,6 +6,7 @@ import {
   positionToIndex,
   getOpositeColor,
   PieceType,
+  BoardData,
 } from '../repositories/additionalTypes/Board';
 import Chess from '../Chess';
 
@@ -78,7 +79,7 @@ export function getRoomsByUser(user: User): Room[] {
 
 export function createBoard(room: Room): Room {
   room.boardData = Chess.createDefaultPosition();
-
+  Chess.createHistoryEntry(room.boardData);
   return room;
 }
 
@@ -121,7 +122,7 @@ export function movePiece(
   if (!Chess.makeMove(room.boardData, initPos, movePos, promotion)) {
     return false;
   }
-
+  Chess.createHistoryEntry(room.boardData);
   Chess.checkGameResult(room.boardData);
 
   return true;

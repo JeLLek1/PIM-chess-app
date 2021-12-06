@@ -126,6 +126,7 @@ export function createDefaultPosition(): BoardData {
     turnColor: 'w',
     turn: 1,
     halfMoves: 0,
+    repeatHistory: [],
   };
   function generatePawns(color: 'w' | 'b'): BoardElement[] {
     const arr = Array(8).fill(null);
@@ -313,7 +314,7 @@ export function checkGameResult(boardData: BoardData) {
       boardData.result = '1/2-1/2';
     }
   }
-  if (boardData.halfMoves >= 50) {
+  else if (boardData.halfMoves >= 50 || checkForRepeatInHistory(boardData)) {
     boardData.result = '1/2-1/2';
   }
 }
@@ -704,7 +705,7 @@ function getAttackedSqares(
 }
 
 /**
- * calcualates possible moves for given position and board
+ * calculates possible moves for given position and board
  *
  * @param {[number, number]} from
  * @returns {Board}
@@ -726,4 +727,71 @@ export function getPossibleMoves(
     moveBoard[move[0]][move[1]] = true;
   });
   return moveBoard;
+}
+
+/**
+ * Creates new entry for board state history
+ * @param {BoardData} board 
+ */
+export function createHistoryEntry(board: BoardData) {
+  function compare(a: BoardElement, b: BoardElement) {
+    return (a !== null && b !== null
+      && a.color === b.color 
+      && a.type === b.type)
+      || (a === null && b === null);
+  }
+  const boardCopy = board.board.map((r) => {
+    return r.map((c) => c);
+  });
+
+  let exists = false;
+  let existIndex = -1;
+  for (let h=0; h < board.repeatHistory.length; h++) {
+    const history = board.repeatHistory[h];
+    let same = true
+    for (let i=0; i < history.boardState.length; i++) {
+      for (let j=0; j < history.boardState[i].length; j++) {
+        if (!compare(history.boardState[i][j], boardCopy[i][j])) {
+          console.log(i, j, history.boardState[i][j], boardCopy[i][j]);
+          same = false;
+          break;
+        }
+      }
+      if (!same) {
+        break;
+      }
+    }
+    if(same) {
+      exists = true;
+      existIndex = h;
+      break;
+    }
+  }
+
+  if(exists) {
+    board.repeatHistory[existIndex].count++;
+  } else {
+    board.repeatHistory.push(
+      {
+        boardState: boardCopy,
+        count: 0,
+      }
+    );
+  }
+}
+
+
+/**
+ * checks for repetition in history
+ * @param {BoardData} board
+ * @param {number} count 
+ * @return {boolean}
+ */
+export function checkForRepeatInHistory(board: BoardData, count = 3):boolean {
+  for (let h=0; h < board.repeatHistory.length; h++) {
+    if (board.repeatHistory[h].count === count) return true; 
+  }
+  console.log("-----------")
+  console.log(board.repeatHistory);
+  return false;
 }

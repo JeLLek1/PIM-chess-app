@@ -4,6 +4,11 @@ export type Board = BoardElement[][];
 
 export type Color = 'w' | 'b';
 
+export type RepeatHistoryEntry = {
+  boardState: Board;
+  count: number;
+};
+
 export type PieceType =
   | 'pawn'
   | 'knight'
@@ -20,6 +25,7 @@ export type BoardData = {
   turnColor: Color;
   turn: number;
   halfMoves: number; // moves without pawn or capture
+  repeatHistory: RepeatHistoryEntry[];
 };
 
 export type BoardElement = {
