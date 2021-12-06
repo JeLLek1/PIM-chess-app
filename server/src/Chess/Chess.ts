@@ -9,11 +9,25 @@ import {
   TPiecesData,
   Color,
   TPieceData,
+  copyBoardData,
 } from '../repositories/additionalTypes/Board';
 import { createBoard } from '../services/RoomService';
 
 type TShifts = {
   [key: string]: [number, number][];
+};
+
+type TCastlingData = {
+  isCastling: boolean;
+  valid: boolean;
+  rookPos?: [number, number];
+  castlingVector?: [number, number];
+};
+
+type TEnPassantData = {
+  isEnPassant: boolean;
+  valid: boolean;
+  pawnPos?: [number, number];
 };
 
 const posiblePromotions: PieceType[] = ['knight', 'bishop', 'rook', 'queen'];
@@ -69,6 +83,18 @@ const simpleAttacks: TShifts = {
   'pawn': [[1, 1], [1, -1]],
 }
 
+// prettier-ignore
+const additionalMoves: TShifts = {
+  'king': [[0, 2], [0, -2]],
+  'pawn': [[1, 0], [2, 0]],
+}
+
+// priettier-ignore
+const kingCastlings: [number, number][] = [
+  [0, -2],
+  [-2, 0],
+];
+
 const pieceMask = new Map<PieceType, number>([
   ['pawn', 1],
   ['knight', 2],
@@ -108,6 +134,7 @@ export function createDefaultPosition(): BoardData {
         color: color,
         type: 'pawn',
         lastMove: -1,
+        specialMove: false,
       };
     });
   }
@@ -130,6 +157,7 @@ export function createDefaultPosition(): BoardData {
         type: type,
         lastMove: -1,
         lastHalfMove: -1,
+        specialMove: false,
       };
     });
   }
@@ -159,6 +187,8 @@ export function makeMove(
   let captureOccured = false;
   // if start position has piece of current color
   if (piece === null || piece.color !== boardData.turnColor) return false;
+  // copy of piece for possibility of rollback
+  const featurePiece: BoardElement = { ...piece };
   const patternPosition = getMovePatternPosition(from, to, piece.color);
   // piece can't be moved on piece of current color or on king squere
   if (
@@ -169,25 +199,37 @@ export function makeMove(
     return false;
   // first check if piece of can make given move pattern
   if (boardData.board[to[0]][to[1]] === null) {
-    if (!checkPieceMovePatern(piece, patternPosition)) return false;
-    //if (!checkEnPassant()) return false;
-    // TODO: check for En passant
+    if (!checkPieceMovePatern(featurePiece, patternPosition)) return false;
   } else {
-    if (!checkPieceAttackPatern(piece, patternPosition)) return false;
+    if (!checkPieceAttackPatern(featurePiece, patternPosition)) return false;
     captureOccured = true;
   }
   //check if not blocked by any other piece
-  if (!squereInRange(piece, boardData.board, from, to)) return false;
+  if (!squereInRange(featurePiece, boardData.board, from, to)) return false;
 
-  // check promotion data
-  if (!checkPromotion(piece, to, promotion)) return false;
+  if (!checkPromotion(featurePiece, to, promotion))
+    // check promotion data
+    return false;
 
   const featureBoard = copyBoard(boardData.board);
-  const featurePiece: BoardElement = featureBoard[from[0]][from[1]];
   featureBoard[from[0]][from[1]] = null;
   featureBoard[to[0]][to[1]] = featurePiece;
   if (typeof promotion !== 'undefined') {
     featurePiece.type = promotion;
+  }
+  // en passant move
+  const enPassantData: TEnPassantData = getEnPassantData(
+    piece,
+    boardData.board,
+    from,
+    to,
+    boardData.turn++,
+  );
+  if (enPassantData.isEnPassant) {
+    if (!enPassantData.valid) {
+      return false;
+    }
+    featureBoard[enPassantData.pawnPos[0]][enPassantData.pawnPos[1]] = null;
   }
 
   const faturePiecesData: TPiecesData = getPiecesData(featureBoard);
@@ -200,6 +242,25 @@ export function makeMove(
   // check if king can move on given squere
   const futureKingPos = faturePiecesData[`${piece.color}king`].position;
   if (featureAttackedSquares[futureKingPos[0]][futureKingPos[1]]) return false;
+  // check if castling is valid
+  const castlingData = getCastlingData(
+    piece,
+    boardData.board,
+    featureAttackedSquares,
+    from,
+    to,
+  );
+  if (!castlingData.valid) return false;
+  if (castlingData.isCastling) {
+    const rookFuturePos: [number, number] = [
+      to[0] - castlingData.castlingVector[0],
+      to[1] - castlingData.castlingVector[1],
+    ];
+    const rook = featureBoard[castlingData.rookPos[0]][castlingData.rookPos[1]];
+    featureBoard[castlingData.rookPos[0]][castlingData.rookPos[1]] = null;
+    featureBoard[rookFuturePos[0]][rookFuturePos[1]] = rook;
+    rook.lastMove = boardData.turn;
+  }
 
   // make move
   featurePiece.lastMove = boardData.turn;
@@ -212,11 +273,49 @@ export function makeMove(
   } else {
     boardData.halfMoves++;
   }
-  // game result
+  return true;
+}
+
+export function checkGameResult(boardData: BoardData) {
+  const piecesData: TPiecesData = getPiecesData(boardData.board);
+  const attackedSquares = getAttackedSqares(
+    piecesData,
+    boardData.board,
+    getOpositeColor(boardData.turnColor),
+  );
+  let isKingAttacked = false;
+  const kingPos = piecesData[`${boardData.turnColor}king`].position;
+  if (attackedSquares[kingPos[0]][kingPos[1]]) {
+    isKingAttacked = true;
+  }
+  const hasMoves = () => {
+    for (const pieceData in piecesData[`${boardData.turnColor}`]) {
+      if (
+        getPossibleMovesPos(
+          piecesData[`${boardData.turnColor}`][pieceData].piece,
+          boardData,
+          piecesData[`${boardData.turnColor}`][pieceData].position,
+        ).length > 0
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+  if (!hasMoves()) {
+    if (isKingAttacked) {
+      if (boardData.turnColor === 'w') {
+        boardData.result = '0-1';
+      } else {
+        boardData.result = '1-0';
+      }
+    } else {
+      boardData.result = '1/2-1/2';
+    }
+  }
   if (boardData.halfMoves >= 50) {
     boardData.result = '1/2-1/2';
   }
-  return true;
 }
 
 /**
@@ -230,6 +329,7 @@ function checkPieceMovePatern(
   piece: BoardElement,
   patternPosition: [number, number],
 ): boolean {
+  piece.specialMove = false;
   if (
     (pieceMoves[patternPosition[0]][patternPosition[1]] &
       pieceMask.get(piece.type)) ===
@@ -238,12 +338,12 @@ function checkPieceMovePatern(
     return false;
   }
   // check if pawn can make 2 position move
-  if (
-    piece.type === 'pawn' &&
-    checkCenter[0] - patternPosition[0] === 2 &&
-    piece.lastMove !== -1
-  ) {
-    return false;
+  if (piece.type === 'pawn' && checkCenter[0] - patternPosition[0] === 2) {
+    if (piece.lastMove === -1) {
+      piece.specialMove = true;
+    } else {
+      return false;
+    }
   }
   return true;
 }
@@ -351,6 +451,50 @@ function squereInRange(
 }
 
 /**
+ * get valid moves for given piece
+ *
+ * @param {BoardElement} piece
+ * @param {BoardData} boardData
+ * @param {[number, number]} from
+ * @returns {[number, number][]}
+ */
+function getPossibleMovesPos(
+  piece: BoardElement,
+  boardData: BoardData,
+  from: [number, number],
+): [number, number][] {
+  const possibleMoves = getPossibleAttackedSquares(boardData.board, from);
+  if (additionalMoves[piece.type] !== undefined) {
+    additionalMoves[piece.type].forEach(shift => {
+      let newPos: [number, number] = null;
+      if (piece.type == 'pawn' && piece.color == 'b') {
+        newPos = [from[0] - shift[0], from[1] - shift[1]];
+      } else {
+        newPos = [from[0] + shift[0], from[1] + shift[1]];
+      }
+      if (!isValidPosition(newPos)) return;
+      possibleMoves.push(newPos);
+    });
+  }
+  const validMoves = [];
+  for (const move of possibleMoves) {
+    const tmpBoardData = copyBoardData(boardData);
+    let promotion: PieceType = undefined;
+    if (
+      piece.type === 'pawn' &&
+      ((piece.color === 'w' && move[0] === 7) ||
+        (piece.color === 'b' && move[0] === 0))
+    ) {
+      promotion = 'queen';
+    }
+    if (makeMove(tmpBoardData, from, move, promotion)) {
+      validMoves.push(move);
+    }
+  }
+  return validMoves;
+}
+
+/**
  * get posible attacked squares by piece in given position
  *
  * @param {Board} board
@@ -404,6 +548,124 @@ function getPossibleAttackedSquares(
 }
 
 /**
+ * check castling data for given piece
+ *
+ * @param {BoardElement} piece
+ * @param {Board} board
+ * @param {boolean[][]} featureAttackedSquares
+ * @param {[number, number]} from
+ * @param {[number, number]} to
+ * @returns {TCastlingData}
+ */
+function getCastlingData(
+  piece: BoardElement,
+  board: Board,
+  featureAttackedSquares: boolean[][],
+  from: [number, number],
+  to: [number, number],
+): TCastlingData {
+  const castlingData: TCastlingData = {
+    isCastling: false,
+    valid: true,
+    rookPos: null,
+    castlingVector: null,
+  };
+  if (piece.type !== 'king') return castlingData;
+  const kingVector: [number, number] = [to[0] - from[0], to[1] - from[1]];
+  if (kingVector[0] !== 0 || (kingVector[1] !== -2 && kingVector[1] !== 2))
+    return castlingData;
+  castlingData.isCastling = true;
+  const vLength = Math.sqrt(
+    kingVector[0] * kingVector[0] + kingVector[1] * kingVector[1],
+  );
+  castlingData.castlingVector = [
+    kingVector[0] / vLength,
+    kingVector[1] / vLength,
+  ];
+  // first king move
+  if (piece.lastMove != -1) {
+    castlingData.valid = false;
+    return castlingData;
+  }
+  let rook: BoardElement = null;
+  let searchRookPosition: [number, number] = [...from];
+  let searchPattern = kingVector[1] < 0 ? [0, -1] : [0, 1];
+  // search for rook
+  while (
+    isValidPosition([
+      searchRookPosition[0] + searchPattern[0],
+      searchRookPosition[1] + searchPattern[1],
+    ]) &&
+    rook === null
+  ) {
+    searchRookPosition = [
+      searchRookPosition[0] + searchPattern[0],
+      searchRookPosition[1] + searchPattern[1],
+    ];
+    rook = board[searchRookPosition[0]][searchRookPosition[1]];
+    castlingData.rookPos = [...searchRookPosition];
+  }
+  // check rook rules
+  if (rook === null || rook.type !== 'rook' || rook.lastMove != -1) {
+    castlingData.valid = false;
+    return castlingData;
+  }
+  // check king rules
+  let searchKingPosition = [...from];
+  for (let i = 0; i < 3; i++) {
+    if (featureAttackedSquares[searchKingPosition[0]][searchKingPosition[1]]) {
+      castlingData.valid = false;
+      return castlingData;
+    }
+    searchKingPosition = [
+      searchKingPosition[0] + searchPattern[0],
+      searchKingPosition[1] + searchPattern[1],
+    ];
+  }
+  return castlingData;
+}
+
+/**
+ * get en passant data
+ *
+ * @param {BoardElement} piece
+ * @param {Board} board
+ * @param {[number, number]} from
+ * @param {[number, number]} to
+ *
+ * @return {TEnPassantData}
+ */
+function getEnPassantData(
+  piece: BoardElement,
+  board: Board,
+  from: [number, number],
+  to: [number, number],
+  turn: number,
+): TEnPassantData {
+  const enPassantData: TEnPassantData = {
+    isEnPassant: false,
+    valid: true,
+    pawnPos: null,
+  };
+  if (piece.type !== 'pawn') return enPassantData;
+  if (board[to[0]][to[1]] !== null) return enPassantData;
+  if (from[1] === to[1]) return enPassantData;
+  enPassantData.isEnPassant = true;
+  enPassantData.pawnPos = [from[0], to[1]];
+  const pawn = board[enPassantData.pawnPos[0]][enPassantData.pawnPos[1]];
+  if (
+    pawn === null ||
+    pawn.type !== 'pawn' ||
+    !pawn.specialMove ||
+    pawn.lastMove !== turn - 1
+  ) {
+    enPassantData.valid = false;
+    return enPassantData;
+  }
+  return enPassantData;
+}
+
+/**
  * check if given position is valid
  *
  * @param {[number, number]} pos
@@ -416,6 +678,14 @@ function isValidPosition(pos: [number, number]): boolean {
   return true;
 }
 
+/**
+ * get attacked squeres pattern
+ *
+ * @param {TPiecesData} piecesData
+ * @param {Board} board
+ * @param {Color} color - color of pieces to return
+ * @returns {boolean[][]}
+ */
 function getAttackedSqares(
   piecesData: TPiecesData,
   board: Board,
@@ -448,176 +718,12 @@ export function getPossibleMoves(
   let moveBoard = Array(8)
     .fill(false)
     .map(() => Array(8).fill(false));
-  // console.log(boardData.board)
-
-  const x = from[0],
-    y = from[1];
-
-  function movesDiag(): boolean[][] {
-    const moveBoard = Array(8)
-      .fill(false)
-      .map(() => Array(8).fill(false));
-    let stopTR = false,
-      stopTL = false,
-      stopBR = false,
-      stopBL = false;
-
-    for (let i = 1; i < 8; i++) {
-      if (!stopTL) {
-        if (x - i >= 0 && y + i < 8 && board[x - i][y + i] === null) {
-          moveBoard[x - i][y + i] = true;
-        } else {
-          if (
-            x - i >= 0 &&
-            y + i < 8 &&
-            board[x - i][y + i].color !== piece.color
-          ) {
-            moveBoard[x - i][y + i] = true;
-          }
-          stopTL = true;
-        }
-      }
-      if (!stopTR) {
-        if (x + i < 8 && y + i < 8 && board[x + i][y + i] === null) {
-          moveBoard[x + i][y + i] = true;
-        } else {
-          if (
-            x + i < 8 &&
-            y + i < 8 &&
-            board[x + i][y + i].color !== piece.color
-          ) {
-            moveBoard[x + i][y + i] = true;
-          }
-          stopTR = true;
-        }
-      }
-      if (!stopBL) {
-        if (x - i >= 0 && y - i >= 0 && board[x - i][y - i] === null) {
-          moveBoard[x - i][y - i] = true;
-        } else {
-          if (
-            x - i >= 0 &&
-            y - i >= 0 &&
-            board[x - i][y - i].color !== piece.color
-          ) {
-            moveBoard[x - i][y - i] = true;
-          }
-          stopBL = true;
-        }
-      }
-      if (!stopBR) {
-        if (x + i < 8 && y - i >= 0 && board[x + i][y - i] === null) {
-          moveBoard[x + i][y - i] = true;
-        } else {
-          if (
-            x + i < 8 &&
-            y - i >= 0 &&
-            board[x + i][y - i].color !== piece.color
-          ) {
-            moveBoard[x + i][y - i] = true;
-          }
-          stopBR = true;
-        }
-      }
-    }
-    return moveBoard;
-  }
-
-  function movesStraight(): boolean[][] {
-    const moveBoard = Array(8)
-      .fill(false)
-      .map(() => Array(8).fill(false));
-    let stopT = false,
-      stopL = false,
-      stopR = false,
-      stopB = false;
-
-    for (let i = 1; i < 8; i++) {
-      if (!stopT) {
-        if (y + i < 8 && board[x][y + i] === null) {
-          moveBoard[x][y + i] = true;
-        } else {
-          if (y + i < 8 && board[x][y + i].color !== piece.color) {
-            moveBoard[x][y + i] = true;
-          }
-          stopT = true;
-        }
-      }
-      if (!stopR) {
-        if (x + i < 8 && board[x + i][y] === null) {
-          moveBoard[x + i][y] = true;
-        } else {
-          if (x + i < 8 && board[x + i][y].color !== piece.color) {
-            moveBoard[x + i][y] = true;
-          }
-          stopR = true;
-        }
-      }
-      if (!stopB) {
-        if (y - i >= 0 && board[x][y - i] === null) {
-          moveBoard[x][y - i] = true;
-        } else {
-          if (y - i >= 0 && board[x][y - i].color !== piece.color) {
-            moveBoard[x][y - 1] = true;
-          }
-          stopB = true;
-        }
-      }
-      if (!stopL) {
-        if (x - i >= 0 && board[x - i][y] === null) {
-          moveBoard[x - i][y] = true;
-        } else {
-          if (x - i >= 0 && board[x - i][y].color !== piece.color) {
-            moveBoard[x - i][y] = true;
-          }
-          stopL = true;
-        }
-      }
-    }
-    return moveBoard;
-  }
 
   if (piece === null) return moveBoard;
-  switch (piece.type) {
-    case 'pawn': {
-      break;
-    }
-    case 'knight': {
-      for (let i = -2; i <= 2; i++) {
-        for (let j = -2; j <= 2; j++) {
-          if (x + i >= 0 && x + i <= 7 && y + j >= 0 && y + j <= 7) {
-            moveBoard[x + i][y + j] = !!(
-              pieceMoves[checkCenter[0] + i][checkCenter[1] + j] &
-                pieceMask.get('knight') &&
-              (!board[x + i][y + j] ||
-                board[x + i][y + j].color !== piece.color)
-            );
-          }
-        }
-      }
-      break;
-    }
-    case 'bishop': {
-      moveBoard = movesDiag();
-      break;
-    }
-    case 'rook': {
-      moveBoard = movesStraight();
-      break;
-    }
-    case 'queen': {
-      const tmp1 = movesDiag();
-      const tmp2 = movesStraight();
-      moveBoard = tmp1.map((e, i) => {
-        return e.map((c, j) => {
-          return c || tmp2[i][j];
-        });
-      });
-      break;
-    }
-    case 'king': {
-      break;
-    }
-  }
+
+  const posibleMoves = getPossibleMovesPos(piece, boardData, from);
+  posibleMoves.forEach(move => {
+    moveBoard[move[0]][move[1]] = true;
+  });
   return moveBoard;
 }

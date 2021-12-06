@@ -1,16 +1,26 @@
 import React from "react";
-import {createStackNavigator} from 'react-navigation-stack';
-import { createAppContainer } from "react-navigation";
+import {createStackNavigator} from '@react-navigation/stack';
 
-import HomeScreen from "../screens/home_screen";
 import RoomScreen from "../screens/room_screen";
-import BoardScreenFinal from "../screens/board_screen";
+import BoardScreen from "../screens/board_screen";
 
-const TmpStack = createStackNavigator({
-    HomeScreen: HomeScreen,
-    RoomScreen: RoomScreen,
-    BoardScreenFinal: BoardScreenFinal
-})
+const TmpStack = createStackNavigator()
 
-export default createAppContainer(TmpStack)
+export const AppStack = () => {
+    return (
+        <TmpStack.Navigator>
+            <TmpStack.Screen name="RoomScreen" 
+                component={RoomScreen}
+                options={{
+                    headerShown: false
+                }}/>
+            <TmpStack.Screen name="BoardScreen"
+                component={BoardScreen}
+                options={{
+                    headerShown: false
+                }}
+            />
+        </TmpStack.Navigator>
+    )
+}
 

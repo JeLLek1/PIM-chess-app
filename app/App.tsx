@@ -5,15 +5,14 @@ import { Button, StyleSheet, Text, View } from "react-native";
 import RoomScreen from "./screens/room_screen";
 import BoardScreen from "./screens/board_screen";
 import { BoardProvider } from "./contexts/board_context";
+import { Router } from "./components/router";
 
 const BACKGROUND = "#E8EAED"
 
 export default function App() {
   return (
     <BoardProvider>
-      <View style={styles.container}>
-        <BoardScreen></BoardScreen>
-      </View>
+      <Router/>
     </BoardProvider>
   );
 }

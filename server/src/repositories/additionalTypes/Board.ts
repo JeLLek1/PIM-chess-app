@@ -26,6 +26,7 @@ export type BoardElement = {
   color: Color;
   type: PieceType;
   lastMove: number;
+  specialMove: boolean;
 };
 
 export type TPieceData = {
@@ -96,6 +97,12 @@ export function copyBoard(board: Board) {
       }
     });
   });
+}
+
+export function copyBoardData(boardData: BoardData) {
+  const newBoardData = { ...boardData };
+  newBoardData.board = copyBoard(boardData.board);
+  return newBoardData;
 }
 
 export function getOpositeColor(color: Color): Color {
