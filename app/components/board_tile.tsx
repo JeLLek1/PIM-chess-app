@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity, Text, View } from "react-native";
+import { StyleSheet, TouchableOpacity, Text, View, Dimensions } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import { BoardContext } from "../contexts/board_context";
 import { ChessPiece, PieceColor, PieceType } from "../models/chess";
@@ -23,10 +23,16 @@ const WHITE = "#eeeed2"
 export default function BoardTile(props: BoardTileProps) {
     const boardContext = useContext(BoardContext);
     const [piece, setPiece] = useState<ChessPiece|undefined>();
+    const [possibleMove, setPossibleMove] = useState<boolean>(false);
     const [promotionVisible, setPromotionVisible] = useState<boolean>(false);
 
     useEffect(() => {
         setPiece(boardContext.board![props.row][props.col]);
+        if (boardContext.possibleMoves) {
+            setPossibleMove(boardContext.possibleMoves[props.row][props.col]);
+        } else {
+            setPossibleMove(false);
+        }
     })
 
     const backgroundColor = (props.row + props.col) % 2 === 0? WHITE : BLACK;
@@ -46,6 +52,7 @@ export default function BoardTile(props: BoardTileProps) {
                 }
             }
             boardContext.makeMove!(props.row, props.col);
+            setPossibleMove(false);
         } else {
             if (piece && boardContext.selectPiece) boardContext.selectPiece(piece);
         }
@@ -54,6 +61,7 @@ export default function BoardTile(props: BoardTileProps) {
     const onPromotion = (value: string) => {
         setPromotionVisible(false);
         boardContext.makeMove!(props.row, props.col,value);
+        setPossibleMove(false);
     } 
 
     const getPieceIcon = (type: PieceType, color: PieceColor) => {
@@ -83,7 +91,9 @@ export default function BoardTile(props: BoardTileProps) {
     return (
         <TouchableOpacity onPress={onTileClicked} style={[style.item, {backgroundColor: backgroundColor}]}>
             <View style={[style.item, boardContext.selectedPiece === piece && piece? style.itemSelected : null]}>
-                {piece && getPieceIcon(piece.type, piece.color)}
+                {(piece && !possibleMove) && getPieceIcon(piece.type, piece.color)}
+                {(possibleMove && !piece) && <View style={style.possibleMove}></View>}
+                {(possibleMove && piece) && <View style={[style.possibleMove, style.relative]}>{getPieceIcon(piece.type, piece.color)}</View>}
             </View>
             <PromotionDialog visible={promotionVisible} onPromotion={onPromotion} title="Select promotion"></PromotionDialog>
         </TouchableOpacity>
@@ -101,5 +111,20 @@ const style = StyleSheet.create({
         width: "100%",
         height: "100%",
         backgroundColor: "rgba(247,247,105,0.5)",
+    },
+
+    possibleMove: {
+        width: Dimensions.get("window").width/8 * 0.33,
+        height: "33%",
+        alignSelf:'center',
+        borderRadius: 100,
+        backgroundColor: "rgba(0, 0, 0, 0.4)"
+    },
+
+    relative: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        width: Dimensions.get("window").width/8,
     }
 })

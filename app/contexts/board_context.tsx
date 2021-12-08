@@ -5,6 +5,7 @@ import { API } from '@env';
 export interface BoardContextModel {
     allRooms: any[],
     board?: Board,
+    possibleMoves?: Array<Array<boolean>>,
     myColor?: PieceColor,
     currentColor?: PieceColor,
     selectedPiece?: ChessPiece,
@@ -31,6 +32,7 @@ export const BoardContext = React.createContext<BoardContextModel>({allRooms: []
 
 export const BoardProvider = ( {children}: any ) => { 
     const [board, setBoard] = useState<Board>();
+    const [possibleMoves, setPossibleMoves] = useState<Array<Array<boolean>>>();
     const [myColor, setMyColor] = useState<PieceColor>();
     const [currentColor, setCurrentColor] = useState<PieceColor>(PieceColor.WHITE);
     const [selectedPiece, setSelectedPiece] = useState<ChessPiece|undefined>(undefined);
@@ -69,7 +71,7 @@ export const BoardProvider = ( {children}: any ) => {
 
         socket.onmessage = evt => {
             const msg = JSON.parse(evt.data);
-            console.log(msg.type);
+            console.log(msg);
             if (msg.type === 'LIST_ROOMS') {
                 onListRoomsMessage(msg);
             }
@@ -93,6 +95,9 @@ export const BoardProvider = ( {children}: any ) => {
             }
             if (msg.type === 'BOARD_UPDATED') {
                 onBoardUpdated(msg);
+            }
+            if (msg.type === 'MOVES_LIST') {
+                onMoveCheck(msg);
             }
             setSocketMsg(msg);
         }
@@ -201,7 +206,10 @@ export const BoardProvider = ( {children}: any ) => {
             }
         }
     }
-    
+
+    const onMoveCheck = (msg: any) => {
+        setPossibleMoves(msg.data.movesBoard);
+    } 
     //wybór figury
     const selectPiece = (piece: ChessPiece) => {
         if (currentColor === myColor && piece) {
@@ -209,6 +217,13 @@ export const BoardProvider = ( {children}: any ) => {
                 setSelectedPiece(undefined);
                 return;
             }
+            ws.send(JSON.stringify({
+                type: 'CHECK_FOR_MOVE',
+                data: {
+                    roomId: roomId,
+                    from: convertPosToAddress(piece.position.row, piece.position.col),
+                }
+            }))
             setSelectedPiece(piece);
         }
     }
@@ -226,6 +241,7 @@ export const BoardProvider = ( {children}: any ) => {
                 }
             }))
             setSelectedPiece(undefined);
+            setPossibleMoves(undefined);
         }
     }
 
@@ -234,6 +250,7 @@ export const BoardProvider = ( {children}: any ) => {
     const value = {
         allRooms: allRooms,
         board: board,
+        possibleMoves: possibleMoves,
         myColor: myColor,
         currentColor: currentColor,
         selectedPiece: selectedPiece,
