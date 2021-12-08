@@ -15,6 +15,7 @@ import QueenBlack from "./icons/queen_black";
 import QueenWhite from "./icons/queen_white";
 import RookBlack from "./icons/rook_black";
 import RookWhite from "./icons/rook_white";
+import { PromotionDialog } from "./promotionDialog";
 
 const BLACK = "#769656"
 const WHITE = "#eeeed2"
@@ -22,6 +23,7 @@ const WHITE = "#eeeed2"
 export default function BoardTile(props: BoardTileProps) {
     const boardContext = useContext(BoardContext);
     const [piece, setPiece] = useState<ChessPiece|undefined>();
+    const [promotionVisible, setPromotionVisible] = useState<boolean>(false);
 
     useEffect(() => {
         setPiece(boardContext.board![props.row][props.col]);
@@ -33,11 +35,26 @@ export default function BoardTile(props: BoardTileProps) {
         console.log(`Tile: ${props.row}-${props.col}`)
         if (boardContext.selectedPiece && (piece === undefined || piece.color !== boardContext.myColor)) {
             console.log(boardContext.selectedPiece);
+            if (boardContext.selectedPiece.type === "pawn") {
+                if (boardContext.selectedPiece.color === PieceColor.WHITE && props.row === 7) {
+                    setPromotionVisible(true);
+                    return;
+                }
+                if (boardContext.selectedPiece.color === PieceColor.BLACK && props.row === 0) {
+                    setPromotionVisible(true);
+                    return;
+                }
+            }
             boardContext.makeMove!(props.row, props.col);
         } else {
             if (piece && boardContext.selectPiece) boardContext.selectPiece(piece);
         }
     }
+
+    const onPromotion = (value: string) => {
+        setPromotionVisible(false);
+        boardContext.makeMove!(props.row, props.col,value);
+    } 
 
     const getPieceIcon = (type: PieceType, color: PieceColor) => {
         switch (type) {
@@ -68,6 +85,7 @@ export default function BoardTile(props: BoardTileProps) {
             <View style={[style.item, boardContext.selectedPiece === piece && piece? style.itemSelected : null]}>
                 {piece && getPieceIcon(piece.type, piece.color)}
             </View>
+            <PromotionDialog visible={promotionVisible} onPromotion={onPromotion} title="Select promotion"></PromotionDialog>
         </TouchableOpacity>
     )
 }

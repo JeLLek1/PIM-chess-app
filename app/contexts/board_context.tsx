@@ -21,7 +21,7 @@ export interface BoardContextModel {
     createRoom?: (name: string) => void;
     //====
 
-    makeMove?: (row: number, col: number) => void,
+    makeMove?: (row: number, col: number, promotion?: string) => void,
     selectPiece?: (piece: ChessPiece) => void,
 
     ws?: WebSocket
@@ -214,14 +214,15 @@ export const BoardProvider = ( {children}: any ) => {
     }
     
     //poruszanie figurą
-    const makeMove = (row: number, col: number) => {
+    const makeMove = (row: number, col: number, promotion?: string) => {
         if (selectedPiece) {
             ws.send(JSON.stringify({
                 type: 'MAKE_MOVE',
                 data: {
                     roomId: roomId,
                     from: convertPosToAddress(selectedPiece.position.row, selectedPiece.position.col),
-                    to: convertPosToAddress(row,col)
+                    to: convertPosToAddress(row,col),
+                    promotion: promotion? promotion : undefined
                 }
             }))
             setSelectedPiece(undefined);
