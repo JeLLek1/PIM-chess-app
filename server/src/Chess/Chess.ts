@@ -127,6 +127,10 @@ export function createDefaultPosition(): BoardData {
     turn: 1,
     halfMoves: 0,
     repeatHistory: [],
+    wasCastlingBlack: false,
+    wasCastlingWhite: false,
+    possibleEnPassantBlack: false,
+    possibleEnPassantWhite: false,
   };
   function generatePawns(color: 'w' | 'b'): BoardElement[] {
     const arr = Array(8).fill(null);
@@ -226,11 +230,13 @@ export function makeMove(
     to,
     boardData.turn++,
   );
+  let possibleEnPassant = false;
   if (enPassantData.isEnPassant) {
     if (!enPassantData.valid) {
       return false;
     }
     featureBoard[enPassantData.pawnPos[0]][enPassantData.pawnPos[1]] = null;
+    possibleEnPassant = true;
   }
 
   const faturePiecesData: TPiecesData = getPiecesData(featureBoard);
@@ -261,6 +267,13 @@ export function makeMove(
     featureBoard[castlingData.rookPos[0]][castlingData.rookPos[1]] = null;
     featureBoard[rookFuturePos[0]][rookFuturePos[1]] = rook;
     rook.lastMove = boardData.turn;
+
+    if (piece.color === 'w') {
+      boardData.wasCastlingWhite = true;
+    } else {
+      boardData.wasCastlingBlack = true;
+    }
+
   }
 
   // make move
@@ -274,6 +287,14 @@ export function makeMove(
   } else {
     boardData.halfMoves++;
   }
+
+  // update enPassant for player
+  if (piece.color === 'w') {
+    boardData.possibleEnPassantWhite = possibleEnPassant;
+  } else {
+    boardData.possibleEnPassantBlack = possibleEnPassant;
+  }
+
   return true;
 }
 
@@ -761,7 +782,11 @@ export function createHistoryEntry(board: BoardData) {
         break;
       }
     }
-    if(same) {
+    if(
+        same && 
+        history.wasCastlingBlack === board.wasCastlingBlack &&
+        history.wasCastlingWhite === board.wasCastlingWhite 
+      ) {
       exists = true;
       existIndex = h;
       break;
@@ -775,6 +800,10 @@ export function createHistoryEntry(board: BoardData) {
       {
         boardState: boardCopy,
         count: 0,
+        wasCastlingWhite: board.wasCastlingWhite,
+        wasCastlingBlack: board.wasCastlingBlack,
+        possibleEnPassantBlack: board.possibleEnPassantBlack,
+        possibleEnPassantWhite: board.possibleEnPassantWhite
       }
     );
   }

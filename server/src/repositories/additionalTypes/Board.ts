@@ -7,6 +7,10 @@ export type Color = 'w' | 'b';
 export type RepeatHistoryEntry = {
   boardState: Board;
   count: number;
+  wasCastlingWhite: boolean;
+  wasCastlingBlack: boolean;
+  possibleEnPassantWhite: boolean;
+  possibleEnPassantBlack: boolean;
 };
 
 export type PieceType =
@@ -23,6 +27,10 @@ export type BoardData = {
   board: Board;
   result: Result;
   turnColor: Color;
+  wasCastlingWhite: boolean;
+  wasCastlingBlack: boolean;
+  possibleEnPassantWhite: boolean;
+  possibleEnPassantBlack: boolean;
   turn: number;
   halfMoves: number; // moves without pawn or capture
   repeatHistory: RepeatHistoryEntry[];
