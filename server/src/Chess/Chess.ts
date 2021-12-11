@@ -228,15 +228,20 @@ export function makeMove(
     boardData.board,
     from,
     to,
-    boardData.turn++,
+    boardData.turn,
   );
-  let possibleEnPassant = false;
+  let possibleEnPassant = checkIfEnPassantPossible(
+    piece,
+    boardData.board,
+    boardData.turn++,
+    from,
+  );
+  console.log(possibleEnPassant);
   if (enPassantData.isEnPassant) {
     if (!enPassantData.valid) {
       return false;
     }
     featureBoard[enPassantData.pawnPos[0]][enPassantData.pawnPos[1]] = null;
-    possibleEnPassant = true;
   }
 
   const faturePiecesData: TPiecesData = getPiecesData(featureBoard);
@@ -289,6 +294,8 @@ export function makeMove(
   }
 
   // update enPassant for player
+  boardData.possibleEnPassantWhite = false;
+  boardData.possibleEnPassantBlack = true;
   if (piece.color === 'w') {
     boardData.possibleEnPassantWhite = possibleEnPassant;
   } else {
@@ -688,6 +695,54 @@ function getEnPassantData(
 }
 
 /**
+ * get en passant data
+ *
+ * @param {BoardElement} piece
+ * @param {Board} board
+ * @param {number} turn
+ * @param {[number, number]} from
+ *
+ * @return {TEnPassantData}
+ */
+ function checkIfEnPassantPossible(
+  piece: BoardElement,
+  board: Board,
+  turn: number,
+  from: [number, number],
+): boolean {
+  console.log(piece);
+  if (piece.type !== 'pawn') return false;
+  let pawn: BoardElement | null = null;
+  let pawnPos = [from[0], from[1]];
+  let newPos = [0, 0];
+
+  if (from[1] + 1 < 8) {
+    pawn = board[from[0]][from[1] + 1];
+    pawnPos = [from[0], from[1] + 1];
+    if (piece.color === 'w') newPos = [pawnPos[0] + 1, pawnPos[1]];
+    else newPos = [pawnPos[0] - 1, pawnPos[1]];
+  } else if (from[1] - 1 >= 0) {
+    pawn = board[from[0]][from[1] - 1];
+    pawnPos = [from[0], from[1] - 1];
+    if (piece.color === 'w') newPos = [pawnPos[0] + 1, pawnPos[1]];
+    else newPos = [pawnPos[0] - 1, pawnPos[1]];
+  } 
+  // console.log('1' , newPos[0] < 0 || newPos[0] > 7, pawn === null || board[newPos[0]][newPos[1]] !== null, pawn, newPos, pawnPos, board[newPos[0]][newPos[1]]);
+  if (newPos[0] < 0 || newPos[0] > 7) return false;
+  if (pawn === null || board[newPos[0]][newPos[1]] !== null) return false;
+  // console.log('2', pawn, pawn.type, pawn.specialMove, pawn.lastMove, turn);
+  if (
+    pawn === null ||
+    pawn.type !== 'pawn' ||
+    !pawn.specialMove ||
+    pawn.lastMove !== turn - 1
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * check if given position is valid
  *
  * @param {[number, number]} pos
@@ -785,7 +840,9 @@ export function createHistoryEntry(board: BoardData) {
     if(
         same && 
         history.wasCastlingBlack === board.wasCastlingBlack &&
-        history.wasCastlingWhite === board.wasCastlingWhite 
+        history.wasCastlingWhite === board.wasCastlingWhite &&
+        history.possibleEnPassantBlack === board.possibleEnPassantBlack &&
+        history.possibleEnPassantWhite === board.possibleEnPassantWhite
       ) {
       exists = true;
       existIndex = h;
