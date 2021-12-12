@@ -2,6 +2,7 @@ import React, { useContext, useState } from "react";
 import { View, Text, StyleSheet, Dimensions, Button } from "react-native";
 import BoardRow from "../components/board_row";
 import { BoardContext } from "../contexts/board_context";
+import { PieceColor } from "../models/chess";
 
 const { width } = Dimensions.get("window");
 const BLACK = "#769656";
@@ -31,9 +32,14 @@ export default function BoardScreen(props: any) {
             {(!boardContext.board && boardContext.isFirst) && 
             <Button onPress={boardContext.startGame!} title={"START GAME"}></Button>}
             {boardContext.board && <View style={style.board}>
-                {
+                {boardContext.myColor === PieceColor.WHITE &&
                     new Array(8).fill(0).map((_,row) => (
                         <BoardRow key={7 - row} row={7 -row}></BoardRow>
+                    ))
+                }
+                {boardContext.myColor === PieceColor.BLACK &&
+                    new Array(8).fill(0).map((_,row) => (
+                        <BoardRow key={row} row={row}></BoardRow>
                     ))
                 }
             </View>}

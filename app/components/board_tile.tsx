@@ -34,8 +34,13 @@ export default function BoardTile(props: BoardTileProps) {
             setPossibleMove(false);
         }
     })
-
-    const backgroundColor = (props.row + props.col) % 2 === 0? WHITE : BLACK;
+    
+    let backgroundColor;
+    if (boardContext.myColor === PieceColor.BLACK) {
+        backgroundColor = (props.row + props.col) % 2 === 0? WHITE : BLACK;
+    } else {
+        backgroundColor = (props.row + props.col) % 2 === 1? WHITE : BLACK;
+    }
 
     const onTileClicked = () => {
         console.log(`Tile: ${props.row}-${props.col}`)
