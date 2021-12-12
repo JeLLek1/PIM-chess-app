@@ -33,7 +33,7 @@ export default function BoardScreen(props: any) {
             {boardContext.board && <View style={style.board}>
                 {
                     new Array(8).fill(0).map((_,row) => (
-                        <BoardRow key={row} row={row}></BoardRow>
+                        <BoardRow key={7 - row} row={7 -row}></BoardRow>
                     ))
                 }
             </View>}
