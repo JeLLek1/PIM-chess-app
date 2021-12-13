@@ -19,6 +19,7 @@ export interface BoardContextModel {
     isFirst?: boolean,
     endGameVisible?: boolean,
     joinRoom?: (roomId: string) => void;
+    leaveRoom?: () => void;
     startGame?: () => void;
     createRoom?: (name: string) => void;
     //====
@@ -200,6 +201,25 @@ export const BoardProvider = ( {children}: any ) => {
         }))
     }
 
+    const leaveRoom = () => {
+        ws.send(JSON.stringify({
+            type: 'LEAVE_ROOM',
+            data: {
+                roomId: roomId
+            }
+        }));
+        setRoomId("");
+        setBoard(undefined);
+        setMyColor(undefined);
+        setSelectedPiece(undefined);
+        setCurrentColor(PieceColor.WHITE);
+        setIsFirst(false);
+        setEndGameVisible(false);
+        setEnemyId("");
+        setUserName("");
+        setEnemyName("");
+    }
+
     //ustawianie mapy początkowej, miedzyczasie wywołuje się hook efektu ustalający kolory graczy
     const onGameStartedMessage = (msg: any) => {
         setBoard(convertBoardData(msg.data.boardData.board));
@@ -276,6 +296,7 @@ export const BoardProvider = ( {children}: any ) => {
         startGame: startGameMessage,
         makeMove,
         selectPiece,
+        leaveRoom,
         ws: ws,
     }
 

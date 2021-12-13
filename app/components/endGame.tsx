@@ -1,5 +1,6 @@
-import React, {useState} from "react";
+import React, {useContext, useState} from "react";
 import { View, Text, StyleSheet, Button, Modal} from 'react-native';
+import { BoardContext } from "../contexts/board_context";
 
 interface EndGameProps {
   visible?: boolean;
@@ -7,7 +8,7 @@ interface EndGameProps {
 }
 
 export const EndGame = (props: EndGameProps) =>{
-
+  const boardContext = useContext(BoardContext);
     return(
       <View>
         <Modal visible={props.visible && props.visible!== undefined}
@@ -31,6 +32,7 @@ export const EndGame = (props: EndGameProps) =>{
     )
 
     function returnRoom(){
+      boardContext.leaveRoom!();
       props.navigation.navigate("RoomScreen")
     }
   }
