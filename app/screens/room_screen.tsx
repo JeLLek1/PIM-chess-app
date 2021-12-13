@@ -37,20 +37,23 @@ export default function RoomScreen(props: any) {
           ))}
         </View>
       </View>
-      <AddRoomModal/>
       <View style={styles.addButton}>
       <Button
         title="Utwórz Pokój"
         onPress={() => setIfVisible(true)}
       />
     </View>
+    <AddRoomModal/>
   </View>
   );
   function AddRoomModal(){
     return(
-      <View style={styles.modal}>
-        <Modal visible={isVisible}>
-          <View style={styles.container}>
+      <View>
+        <Modal visible={isVisible}
+        transparent={true}
+        >
+          <View style={styles.centeredView}>
+          <View style={styles.modal}>
             <TextInput value={room.name} style={styles.input} placeholder="Nazwa pokoju" onChangeText={e => setRoom({name: e, id: ''})}/>
             <TextInput value={nick} style={styles.input} placeholder="Nick"/>
             <View style={styles.complete}>
@@ -58,6 +61,7 @@ export default function RoomScreen(props: any) {
               title="Zatwierdź"
                onPress={() => addRoom()}
               />
+            </View>
             </View>
           </View>
         </Modal>
@@ -80,25 +84,38 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#E8EAED',
   },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22
+  },
   modal: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    position: 'relative',
-    width: '40%',
-    height: '40%',
+    margin: 10,
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 40,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
   },
   input: {
     position: 'relative',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
     backgroundColor: '#FFF',
-    borderRadius: 60,
+    borderRadius: 30,
     borderColor: '#C0C0C0',
     borderWidth: 1,
-    width: '50%',
+    width: '80%',
   },
   roomBackground: {
     paddingTop: 80,

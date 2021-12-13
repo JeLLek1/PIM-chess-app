@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Dimensions, Button } from "react-native";
 import BoardRow from "../components/board_row";
 import { BoardContext } from "../contexts/board_context";
 import { PieceColor } from "../models/chess";
+import {EndGame} from "../components/endGame";
+import { baseProps } from "react-native-gesture-handler/lib/typescript/handlers/gestureHandlers";
 
 const { width } = Dimensions.get("window");
 const BLACK = "#769656";
@@ -50,6 +52,7 @@ export default function BoardScreen(props: any) {
                 {boardContext.currentColor && <View style={[style.colorBox, boardContext.currentColor === "w"? {backgroundColor: "#fff"}:{ backgroundColor: "#000"}]}>
                 </View>}
             </View>}
+        <EndGame visible ={boardContext.endGameVisible!} navigation = {props.navigation}/>
         </View>
     )
 }

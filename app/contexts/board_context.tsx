@@ -17,6 +17,7 @@ export interface BoardContextModel {
     enemyId?: string,
     enemyName?: string,
     isFirst?: boolean,
+    endGameVisible?: boolean,
     joinRoom?: (roomId: string) => void;
     startGame?: () => void;
     createRoom?: (name: string) => void;
@@ -45,6 +46,7 @@ export const BoardProvider = ( {children}: any ) => {
     const [enemyName, setEnemyName] = useState<string>("");
     const [allRooms, setAllRooms] = useState<any[]>([]);
     const [isFirst, setIsFirst] = useState<boolean>(false);
+    const [endGameVisible, setEndGameVisible] = useState<boolean>(false);
 
     //Ze względu na opóźnienia związane z odczytem stanu kolor gracza ustawiamy dopiero po tym jak ustawimy wiadomośc o rozpoczetej grze
     useEffect(() => {
@@ -98,6 +100,9 @@ export const BoardProvider = ( {children}: any ) => {
             }
             if (msg.type === 'MOVES_LIST') {
                 onMoveCheck(msg);
+            }
+            if (msg.type === 'GAME_ENDED'){
+                onGameEnded(msg);
             }
             setSocketMsg(msg);
         }
@@ -172,6 +177,9 @@ export const BoardProvider = ( {children}: any ) => {
         }))
     }
 
+    const  onGameEnded = (message: any) => {
+        setEndGameVisible(true);
+    }
     const joinRoom = (roomId: string) => {
         console.log(`joining room ${roomId}`);
         ws.send(JSON.stringify({
@@ -183,6 +191,7 @@ export const BoardProvider = ( {children}: any ) => {
     }
 
     const createRoom = (roomName: string) => {
+        console.log(ws)
         ws.send(JSON.stringify({
             type: 'CREATE_ROOM',
             data: {
@@ -210,6 +219,7 @@ export const BoardProvider = ( {children}: any ) => {
     const onMoveCheck = (msg: any) => {
         setPossibleMoves(msg.data.movesBoard);
     } 
+
     //wybór figury
     const selectPiece = (piece: ChessPiece) => {
         if (currentColor === myColor && piece) {
@@ -260,6 +270,7 @@ export const BoardProvider = ( {children}: any ) => {
         userName: userName,
         enemyName: enemyName,
         isFirst: isFirst,
+        endGameVisible: endGameVisible,
         joinRoom: joinRoom,
         createRoom: createRoom,
         startGame: startGameMessage,

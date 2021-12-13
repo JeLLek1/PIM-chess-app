@@ -28,18 +28,22 @@ const Room = (prop: {name: string, id: string, navigation: any}) => {
     )
     function JoinRoomModal(){
         return(
-          <View style={styles.modal}>
-            <Modal visible={ifVisible}>
-              <View>
-                <TextInput value={nick} style={styles.input} placeholder="Nick"/>
-                <View style={styles.complete}>
-                <Button
-                  title="Dołącz"
-                   onPress={() => joinRoom()}
-                  />
+          <View>
+              <Modal visible={ifVisible}
+              transparent={true}
+              >
+                <View style={styles.centeredView}>
+                <View style={styles.modal}>
+                  <TextInput value={nick} style={styles.input} placeholder="Nick"/>
+                  <View style={styles.complete}>
+                  <Button
+                    title="Dołącz"
+                    onPress={() => joinRoom()}
+                    />
+                  </View>
                 </View>
-              </View>
-            </Modal>
+                </View>
+              </Modal>
           </View>
         )
       }
@@ -81,20 +85,33 @@ const styles = StyleSheet.create({
         borderRadius: 60,
         borderColor: "#C0C0C0",
         borderWidth: 1,
-        width: '50%',
+        width: '80%',
       },
       complete:{
         position: 'relative',
         alignItems: 'center',
-        width:"30%"
+        width:"50%"
       },
-    modal:{
-        display: "flex",
-        flexDirection: "column",
+      centeredView: {
+        flex: 1,
+        justifyContent: "center",
         alignItems: "center",
-        position: 'relative',
-        width:"40%",
-        height:"40%"
+        marginTop: 22
+      },
+    modal: {
+        margin: 10,
+        backgroundColor: "white",
+        borderRadius: 10,
+        padding: 40,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
       },
     roomText:{
         maxWidth: '80%',

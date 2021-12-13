@@ -1,12 +1,20 @@
 import React, {useState} from "react";
 import { View, Text, StyleSheet, Button, Modal} from 'react-native';
 
-function EndGame(){
-  const [isVisible, setIsVisible] = useState(false)
+interface EndGameProps {
+  visible?: boolean;
+  navigation: any
+}
+
+export const EndGame = (props: EndGameProps) =>{
 
     return(
-      <View style={styles.modal}>
-        <Modal visible={isVisible}>
+      <View>
+        <Modal visible={props.visible && props.visible!== undefined}
+        transparent={true}
+        >
+          <View style={styles.centeredView}>
+          <View style={styles.modal}>
           <View>
           <Text style={styles.roomText}>Gra Zakończona!</Text>
             <View style={styles.complete}>
@@ -16,12 +24,14 @@ function EndGame(){
               />
             </View>
           </View>
+        </View>
+        </View>
         </Modal>
       </View>
     )
 
     function returnRoom(){
-
+      props.navigation.navigate("RoomScreen")
     }
   }
 
@@ -35,10 +45,10 @@ function EndGame(){
         alignItems: "center",
         flexWrap: 'wrap'
     },
-    room:{
+    endGame:{
         backgroundColor: "#FFF",
-        padding: 15,
-        borderRadius: 10,
+        padding: 60,
+        borderRadius: 60,
         flexDirection: 'row',
         alignItems: "center",
         justifyContent: "space-between",
@@ -54,26 +64,47 @@ function EndGame(){
         borderRadius: 60,
         borderColor: "#C0C0C0",
         borderWidth: 1,
-        width: '50%',
+        width: '80%',
       },
       complete:{
         position: 'relative',
         alignItems: 'center',
-        width:"30%"
+        width:"90%",
+        bottom: 5,
       },
-    modal:{
-        display: "flex",
-        flexDirection: "column",
+      centeredView: {
+        flex: 1,
+        justifyContent: "center",
         alignItems: "center",
-        position: 'relative',
-        width:"40%",
-        height:"40%"
+        marginTop: 22
+      },
+      modal: {
+        backgroundColor: "white",
+        borderRadius: 5,
+        padding: 80,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
       },
     roomText:{
-        maxWidth: '80%',
+        margin: 40,
+        fontSize: 20,
+        alignItems: 'center',
+        maxWidth: '100%',
+    },
+    resultText:{
+        margin: 40,
+        fontSize: 30,
+        alignItems: 'center',
+        maxWidth: '100%',
     },
     button:{
 
     }
 })
-export default EndGame()
