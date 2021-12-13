@@ -5,27 +5,27 @@ import KnightWhite from "./icons/knight_white";
 
 //import "../assets/room-icon.png";
 
-const Room = (prop: {name: string, id: string, navigation: any}) => {
+const Room = (prop: {name: string, id: string, navigation: any, user1: any, user2: any}) => {
     const [ifVisible, setIsVisible] = useState(false)
     const [nick, setNick] = useState()
     const boardContext = useContext(BoardContext);
     return (
-        <>
+      <>
         <View style={styles.room}>
-            <View style={styles.roomLeft}>
-                <KnightWhite/>
-                <Text style={styles.roomText}>{prop.name}</Text>
-            </View>
-            <View style={styles.button}>
-            <Button
-                title="Dołącz"
-                onPress={() => setIsVisible(true)}
-                />
-            </View>
+          <View style={styles.roomLeft}>
+            <KnightWhite />
+            <Text style={styles.roomText}>{prop.name}</Text>
+          </View>
+          <View style={styles.button}>
+            {(prop.user1 === null ||
+              prop.user2 === null) && (
+                <Button title="Dołącz" onPress={() => setIsVisible(true)} />
+              )}
+          </View>
         </View>
-        <JoinRoomModal/>
-        </>
-    )
+        <JoinRoomModal />
+      </>
+    );
     function JoinRoomModal(){
         return(
           <View>

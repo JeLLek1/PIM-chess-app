@@ -32,19 +32,23 @@ export default function RoomScreen(props: any) {
       <View style={styles.roomBackground}>
         <Text style={styles.sectionTitle}>Lista pokoi:</Text>
         <View style={styles.roomList}>
-          {boardContext.allRooms.map((sRoom: any) =>(
-            <Room key={sRoom.roomId} name={sRoom.roomName} id={sRoom.roomId} navigation={props.navigation}></Room>
+          {boardContext.allRooms.map((sRoom: any) => (
+            <Room
+              key={sRoom.roomId}
+              name={sRoom.roomName}
+              id={sRoom.roomId}
+              user1={sRoom.user1}
+              user2={sRoom.user2}
+              navigation={props.navigation}
+            ></Room>
           ))}
         </View>
       </View>
       <View style={styles.addButton}>
-      <Button
-        title="Utwórz Pokój"
-        onPress={() => setIfVisible(true)}
-      />
+        <Button title="Utwórz Pokój" onPress={() => setIfVisible(true)} />
+      </View>
+      <AddRoomModal />
     </View>
-    <AddRoomModal/>
-  </View>
   );
   function AddRoomModal(){
     return(
